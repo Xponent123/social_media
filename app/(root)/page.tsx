@@ -34,15 +34,31 @@ async function Home({
           <>
             {result.posts.map((post) => (
               <ThreadCard
-                key={post._id}
-                id={post._id}
+                key={post._id.toString()}
+                id={post._id.toString()}
                 currentUserId={user.id}
-                parentId={post.parentId}
+                parentId={post.parentId ? post.parentId.toString() : null}
                 content={post.text}
-                author={post.author}
-                community={post.community}
-                createdAt={post.createdAt}
-                comments={post.children}
+                author={{
+                  name: post.author.name,
+                  image: post.author.image,
+                  id: post.author._id.toString(),
+                }}
+                community={
+                  post.community
+                    ? {
+                        id: post.community._id.toString(),
+                        name: post.community.name,
+                        image: post.community.image,
+                      }
+                    : null
+                }
+                createdAt={post.createdAt.toString()}
+                comments={post.children.map((child: any) => ({
+                  author: {
+                    image: child.author.image,
+                  },
+                }))}
               />
             ))}
           </>

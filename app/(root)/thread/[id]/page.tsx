@@ -20,18 +20,39 @@ async function page({ params }: { params: { id: string } }) {
 
   const thread = await fetchThreadById(params.id);
 
+  const serializeThread = (t: any) => ({
+    id: t._id.toString(),
+    parentId: t.parentId?.toString() || null,
+    content: t.text,
+    createdAt: t.createdAt.toString(),
+    author: {
+      id: t.author._id.toString(),
+      name: t.author.name,
+      image: t.author.image,
+    },
+    community: t.community
+      ? {
+          id: t.community._id.toString(),
+          name: t.community.name,
+          image: t.community.image,
+        }
+      : null,
+    comments: (t.children || []).map((child: any) => ({
+      author: {
+        image: child.author.image,
+      },
+    })),
+  });
+
+  const serializedMainThread = serializeThread(thread);
+  const serializedReplies = (thread.children || []).map(serializeThread);
+
   return (
     <section className='relative'>
       <div>
         <ThreadCard
-          id={thread._id}
+          {...serializedMainThread}
           currentUserId={user.id}
-          parentId={thread.parentId}
-          content={thread.text}
-          author={thread.author}
-          community={thread.community}
-          createdAt={thread.createdAt}
-          comments={thread.children}
         />
       </div>
 
@@ -39,22 +60,16 @@ async function page({ params }: { params: { id: string } }) {
         <Comment
           threadId={params.id}
           currentUserImg={user.imageUrl}
-          currentUserId={JSON.stringify(userInfo._id)}
+          currentUserId={userInfo._id.toString()}
         />
       </div>
 
       <div className='mt-10'>
-        {thread.children.map((childItem: any) => (
+        {serializedReplies.map((reply) => (
           <ThreadCard
-            key={childItem._id}
-            id={childItem._id}
+            key={reply.id}
+            {...reply}
             currentUserId={user.id}
-            parentId={childItem.parentId}
-            content={childItem.text}
-            author={childItem.author}
-            community={childItem.community}
-            createdAt={childItem.createdAt}
-            comments={childItem.children}
             isComment
           />
         ))}
