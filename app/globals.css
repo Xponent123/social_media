@@ -103,7 +103,7 @@
   }
 
   .bottombar-container {
-    @apply flex justify-between items-center w-full max-w-md mx-auto;
+    @apply flex justify-around items-center w-full max-w-md mx-auto;
   }
 
   .bottombar-link {
@@ -111,7 +111,7 @@
   }
 
   .bottombar-icon {
-    @apply w-6 h-6 md:w-5 md:h-5;
+    @apply w-6 h-6;
   }
 
   .bottombar-text {

@@ -20,7 +20,9 @@ function Topbar() {
               priority
             />
           </div>
-          <p className='font-bold text-xl text-text-primary'>ConnectX</p>
+          <p className='font-bold text-xl text-text-primary max-sm:hidden'>
+            ConnectX
+          </p>
         </Link>
       </div>
 
@@ -47,6 +49,8 @@ function Topbar() {
             elements: {
               organizationSwitcherTrigger:
                 "py-2 px-4 rounded-lg border border-border text-text-primary bg-bg-primary",
+              userPreviewTextContainer: "max-sm:hidden",
+              organizationPreviewTextContainer: "max-sm:hidden",
             },
           }}
         />

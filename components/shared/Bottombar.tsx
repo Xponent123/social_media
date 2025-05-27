@@ -38,10 +38,10 @@ function Bottombar() {
                 height={24}
                 className='bottombar-icon object-contain'
               />
-
-              <p className='bottombar-text'>
+              {/* Hide text labels on smallest screens */}
+              <span className='bottombar-text sm:inline hidden'>
                 {link.label.split(/\s+/)[0]}
-              </p>
+              </span>
             </Link>
           );
         })}
