@@ -26,6 +26,7 @@ interface SerializedComment {
   author: {
     image: string;
   };
+  childCount?: number; // Add this to track replies to comments
 }
 
 interface SerializedThread {
@@ -70,6 +71,7 @@ async function page({ params }: { params: { id: string } }) {
       author: {
         image: child.author.image,
       },
+      childCount: child.children?.length || 0, // Include count of nested replies
     })),
   });
 

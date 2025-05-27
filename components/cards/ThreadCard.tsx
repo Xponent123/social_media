@@ -2,6 +2,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Heart, MessageCircle } from "lucide-react";
 
 import { formatDateString } from "@/lib/utils";
 import DeleteThread from "../forms/DeleteThread";
@@ -26,6 +28,7 @@ interface Props {
     author: {
       image: string;
     };
+    childCount?: number; // Add this to track replies to comments
   }[];
   isComment?: boolean;
 }
@@ -42,19 +45,34 @@ function ThreadCard({
   isComment,
 }: Props) {
   const [liked, setLiked] = useState(false);
-  const toggleLike = () => setLiked((prev) => !prev);
+  const toggleLike = () => {
+    setLiked((prev) => !prev);
+    // Add subtle animation to the heart
+    const heart = document.getElementById(`heart-${id}`);
+    if (heart) {
+      heart.classList.add("animate-ping");
+      setTimeout(() => heart.classList.remove("animate-ping"), 300);
+    }
+  };
 
   return (
-    <article
+    <motion.article
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
       className={`thread-card ${
         isComment ? "border-0 shadow-none pl-0" : ""
       } mb-5 w-full max-w-full`}
     >
       <div className='flex gap-3 md:gap-4 w-full'>
-        {/* Author Avatar - improved for visibility */}
+        {/* Author Avatar with animated hover effect */}
         <div className='flex-shrink-0'>
           <Link href={`/profile/${author.id}`} className='block'>
-            <div className='relative h-8 w-8 md:h-10 md:w-10 overflow-hidden rounded-full bg-bg-tertiary'>
+            <motion.div 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className='relative h-8 w-8 md:h-10 md:w-10 overflow-hidden rounded-full bg-bg-tertiary'
+            >
               <Image
                 src={author.image}
                 alt={author.name}
@@ -63,12 +81,12 @@ function ThreadCard({
                 className='object-cover'
                 priority
               />
-            </div>
+            </motion.div>
           </Link>
         </div>
 
         {/* Thread Content */}
-        <div className='flex-grow min-w-0 overflow-hidden'> {/* Added overflow handling */}
+        <div className='flex-grow min-w-0 overflow-hidden'>
           <div className='flex items-center justify-between mb-1'>
             <Link href={`/profile/${author.id}`} className='hover:underline'>
               <h4 className='font-semibold text-text-primary text-sm md:text-base truncate max-w-[120px] md:max-w-none'>
@@ -91,90 +109,127 @@ function ThreadCard({
             {content}
           </p>
 
-          {/* Action Buttons - simplified to only keep like and reply */}
+          {/* Action Buttons with animations */}
           <div className='flex gap-3 md:gap-4 mb-2'>
-            <button
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
               onClick={toggleLike}
               aria-label='like thread'
-              className='btn-icon text-text-secondary p-1 md:p-2'
+              className='btn-icon text-text-secondary p-1 md:p-2 group'
             >
-              <Image
-                src={
-                  liked
-                    ? "/assets/heart-filled.svg"
-                    : "/assets/heart-gray.svg"
-                }
-                alt='heart'
-                width={18}
-                height={18}
-                className='object-contain'
-                priority
-              />
-            </button>
+              <AnimatePresence mode="wait">
+                {liked ? (
+                  <motion.div
+                    key="filled"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    id={`heart-${id}`}
+                    className="text-red-500"
+                  >
+                    <Heart className="w-5 h-5 fill-current" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="outline"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    id={`heart-${id}`}
+                    className="group-hover:text-red-400 transition-colors"
+                  >
+                    <Heart className="w-5 h-5" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
 
-            <Link
-              href={`/thread/${id}`}
-              className='btn-icon text-text-secondary p-1 md:p-2'
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
             >
-              <Image
-                src='/assets/reply.svg'
-                alt='reply'
-                width={18}
-                height={18}
-                className='object-contain'
-              />
-            </Link>
+              <Link
+                href={`/thread/${id}`}
+                className='btn-icon text-text-secondary p-1 md:p-2 hover:text-accent-primary transition-colors'
+              >
+                <MessageCircle className="w-5 h-5" />
+              </Link>
+            </motion.div>
           </div>
 
-          {/* Comment Preview */}
-          {!isComment && comments.length > 0 && (
+          {/* Comment Preview with enhanced styling */}
+          {(!isComment && comments.length > 0) || 
+           (isComment && comments.some(c => c.childCount && c.childCount > 0)) ? (
             <div className='flex items-center gap-2 mt-2 md:mt-3'>
-              <div className='flex'>
-                {comments.slice(0, 2).map((comment, index) => (
-                  <div
-                    key={index}
-                    className={`relative w-5 h-5 md:w-6 md:h-6 rounded-full overflow-hidden border-2 border-bg-primary ${
-                      index !== 0 ? "-ml-2 md:-ml-3" : ""
-                    }`}
-                  >
-                    <Image
-                      src={comment.author.image}
-                      alt={`commenter_${index}`}
-                      fill
-                      className='object-cover'
-                    />
-                  </div>
-                ))}
-              </div>
+              {!isComment ? (
+                // Original comment preview for threads
+                <div className='flex'>
+                  {comments.slice(0, 2).map((comment, index) => (
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      key={index}
+                      className={`relative w-5 h-5 md:w-6 md:h-6 rounded-full overflow-hidden border-2 border-bg-primary ${
+                        index !== 0 ? "-ml-2 md:-ml-3" : ""
+                      }`}
+                    >
+                      <Image
+                        src={comment.author.image}
+                        alt={`commenter_${index}`}
+                        fill
+                        className='object-cover'
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              ) : null}
 
               <Link
                 href={`/thread/${id}`}
-                className='text-xs md:text-sm text-text-muted hover:underline'
+                className='text-xs md:text-sm text-text-muted hover:underline hover:text-accent-primary transition-colors'
               >
-                {comments.length}{" "}
-                {comments.length === 1 ? "reply" : "replies"}
+                {!isComment ? (
+                  // Original reply count for threads
+                  <>
+                    {comments.length}{" "}
+                    {comments.length === 1 ? "reply" : "replies"}
+                  </>
+                ) : (
+                  // Show replies to this comment
+                  <>
+                    {comments.reduce((sum, c) => sum + (c.childCount || 0), 0)}{" "}
+                    {comments.reduce((sum, c) => sum + (c.childCount || 0), 0) === 1 ? "reply" : "replies"}
+                  </>
+                )}
               </Link>
             </div>
-          )}
+          ) : null}
 
-          {/* Community Tag */}
+          {/* Community Tag with enhanced styling */}
           {!isComment && community && (
             <div className='mt-2 md:mt-3 flex items-center gap-1 md:gap-2 text-xs md:text-sm text-text-muted'>
               <span>{formatDateString(createdAt)}</span>
               <span>•</span>
               <Link
                 href={`/communities/${community.id}`}
-                className='flex items-center gap-1 hover:underline'
+                className='flex items-center gap-1 hover:underline group transition-all'
               >
-                <div className='relative w-3 h-3 md:w-4 md:h-4 rounded-full overflow-hidden'>
+                <motion.div 
+                  whileHover={{ scale: 1.1 }}
+                  className='relative w-3 h-3 md:w-4 md:h-4 rounded-full overflow-hidden'
+                >
                   <Image
                     src={community.image}
                     alt={community.name}
                     fill
-                    className='object-cover'
+                    className='object-cover group-hover:scale-110 transition-transform'
                   />
-                </div>
-                <span className="truncate max-w-[80px] md:max-w-none">
+                </motion.div>
+                <span className="truncate max-w-[80px] md:max-w-none group-hover:text-accent-primary transition-colors">
                   {community.name}
                 </span>
               </Link>
@@ -182,7 +237,7 @@ function ThreadCard({
           )}
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }
 

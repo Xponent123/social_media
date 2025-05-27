@@ -6,13 +6,14 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { Send } from "lucide-react";
 
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
 } from "@/components/ui/form";
 
 import { CommentValidation } from "@/lib/validations/thread";
@@ -36,10 +37,28 @@ const Comment = ({ threadId, currentUserImg, currentUserId }: Props) => {
   });
 
   const onSubmit = async (values: z.infer<typeof CommentValidation>) => {
+    // Fix the JSON parsing issue by handling the userId properly
+    let parsedUserId;
+    
+    try {
+      // Check if it's already a valid ObjectId string
+      if (typeof currentUserId === 'string' && 
+          /^[0-9a-fA-F]{24}$/.test(currentUserId)) {
+        parsedUserId = currentUserId;
+      } else {
+        // Try parsing it (handle both JSON string and regular string)
+        parsedUserId = JSON.parse(currentUserId);
+      }
+    } catch (error) {
+      // If parsing fails, use the original value
+      console.error("Error parsing userId:", error);
+      parsedUserId = currentUserId;
+    }
+
     await addCommentToThread(
       threadId,
       values.thread,
-      JSON.parse(currentUserId),
+      parsedUserId,
       pathname
     );
 
@@ -49,24 +68,32 @@ const Comment = ({ threadId, currentUserImg, currentUserId }: Props) => {
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
+      <motion.form 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        onSubmit={form.handleSubmit(onSubmit)} 
         className='bg-bg-primary rounded-xl border border-border shadow-sm p-4 mb-8'
       >
         <div className='flex flex-col gap-3'>
-          <h3 className='text-base-semibold text-text-primary'>Post your reply</h3>
-
+          <h3 className='text-base-semibold text-text-primary bg-gradient-to-r from-[rgba(var(--gradient-1-start),1)] to-[rgba(var(--gradient-1-end),1)] text-transparent bg-clip-text'>
+            Post your reply
+          </h3>
+          
           <div className='flex items-start gap-4'>
-            <div className='flex-shrink-0 mt-1'>
+            <motion.div 
+              whileHover={{ scale: 1.05 }}
+              className='flex-shrink-0 mt-1'
+            >
               <Image
                 src={currentUserImg}
                 alt='Profile image'
                 width={36}
                 height={36}
-                className='rounded-full object-cover'
+                className='rounded-full object-cover border-2 border-accent-primary/20'
               />
-            </div>
-
+            </motion.div>
+            
             <FormField
               control={form.control}
               name='thread'
@@ -83,18 +110,25 @@ const Comment = ({ threadId, currentUserImg, currentUserId }: Props) => {
               )}
             />
           </div>
-
+          
           <div className='flex justify-end'>
-            <button
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               type='submit'
-              className='btn-primary px-8'
+              className='btn-primary px-6 py-2 flex items-center gap-2'
               disabled={form.formState.isSubmitting}
             >
-              {form.formState.isSubmitting ? "Posting..." : "Reply"}
-            </button>
+              {form.formState.isSubmitting ? "Posting..." : (
+                <>
+                  Reply
+                  <Send className="w-4 h-4" />
+                </>
+              )}
+            </motion.button>
           </div>
         </div>
-      </form>
+      </motion.form>
     </Form>
   );
 };

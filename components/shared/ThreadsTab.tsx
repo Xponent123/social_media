@@ -92,6 +92,8 @@ async function ThreadsTab({ currentUserId, accountId, accountType }: Props) {
             author: {
               image: child.author.image,
             },
+            // Include the count of child replies to this comment
+            childCount: child.children?.length || 0
           })),
         };
 
