@@ -9,6 +9,35 @@ import { fetchThreadById } from "@/lib/actions/thread.actions";
 
 export const revalidate = 0;
 
+// Define interfaces for the serialized thread data
+interface SerializedAuthor {
+  id: string;
+  name: string;
+  image: string;
+}
+
+interface SerializedCommunity {
+  id: string;
+  name: string;
+  image: string;
+}
+
+interface SerializedComment {
+  author: {
+    image: string;
+  };
+}
+
+interface SerializedThread {
+  id: string;
+  parentId: string | null;
+  content: string;
+  createdAt: string;
+  author: SerializedAuthor;
+  community: SerializedCommunity | null;
+  comments: SerializedComment[];
+}
+
 async function page({ params }: { params: { id: string } }) {
   if (!params.id) return null;
 
@@ -20,7 +49,7 @@ async function page({ params }: { params: { id: string } }) {
 
   const thread = await fetchThreadById(params.id);
 
-  const serializeThread = (t: any) => ({
+  const serializeThread = (t: any): SerializedThread => ({
     id: t._id.toString(),
     parentId: t.parentId?.toString() || null,
     content: t.text,
@@ -65,7 +94,7 @@ async function page({ params }: { params: { id: string } }) {
       </div>
 
       <div className='mt-10'>
-        {serializedReplies.map((reply) => (
+        {serializedReplies.map((reply: SerializedThread) => (
           <ThreadCard
             key={reply.id}
             {...reply}
