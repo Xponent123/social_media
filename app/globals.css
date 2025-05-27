@@ -54,7 +54,7 @@
 @layer components {
   /* Main layout */
   .main-container {
-    @apply flex min-h-screen flex-1 flex-col items-center bg-bg-primary px-6 pb-10 pt-28 max-md:pb-32 sm:px-10 transition-colors duration-300;
+    @apply flex min-h-screen flex-1 flex-col items-center bg-bg-primary px-4 pb-10 pt-28 max-md:pb-32 md:px-6 lg:px-10 transition-colors duration-300;
     background-image: linear-gradient(to bottom, 
       rgb(var(--color-bg-primary)), 
       rgb(var(--color-bg-secondary)));
@@ -62,12 +62,12 @@
 
   /* Head Text */
   .head-text {
-    @apply text-heading2-bold text-text-primary mb-6;
+    @apply text-heading4-bold md:text-heading3-bold lg:text-heading2-bold text-text-primary mb-6;
   }
 
   /* Cards */
   .card {
-    @apply rounded-xl bg-bg-primary border border-border shadow-sm p-6 transition-all duration-300;
+    @apply rounded-xl bg-bg-primary border border-border shadow-sm p-4 md:p-6 transition-all duration-300;
   }
 
   /* Thread card */
@@ -81,11 +81,12 @@
 
   /* Navigation */
   .topbar {
-    @apply fixed top-0 z-30 flex w-full items-center justify-between bg-bg-primary/80 backdrop-blur-md border-b border-border px-6 py-4 transition-colors duration-300;
+    @apply fixed top-0 z-30 flex w-full items-center justify-between bg-bg-primary/80 backdrop-blur-md border-b border-border px-4 py-3 md:px-6 md:py-4 transition-colors duration-300;
   }
 
   .sidebar {
-    @apply fixed left-0 top-0 z-20 flex h-screen w-fit flex-col justify-between overflow-auto border-r border-border bg-bg-primary pt-28 pb-5 transition-colors duration-300;
+    @apply fixed left-0 top-0 z-20 hidden md:flex h-screen w-fit flex-col justify-between overflow-auto border-r border-border bg-bg-primary pt-28 pb-5 transition-colors duration-300;
+    width: 240px;
   }
   
   .sidebar_link {
@@ -97,7 +98,23 @@
   }
 
   .bottombar {
-    @apply fixed bottom-0 z-10 w-full bg-bg-primary/80 backdrop-blur-md border-t border-border p-4 transition-colors duration-300 md:hidden;
+    @apply fixed bottom-0 z-10 w-full bg-bg-primary/90 backdrop-blur-md border-t border-border p-2 md:p-4 transition-colors duration-300;
+  }
+
+  .bottombar-container {
+    @apply flex justify-between items-center w-full max-w-md mx-auto;
+  }
+
+  .bottombar-link {
+    @apply flex flex-col items-center p-2 rounded-lg transition-colors;
+  }
+
+  .bottombar-icon {
+    @apply w-6 h-6 md:w-5 md:h-5;
+  }
+
+  .bottombar-text {
+    @apply text-xs mt-1;
   }
 
   /* Buttons */
@@ -150,7 +167,16 @@
   }
 
   .rightsidebar {
-    @apply sticky right-0 top-0 z-20 flex h-screen w-fit flex-col justify-between gap-12 overflow-auto border-l border-border bg-bg-primary px-10 pb-6 pt-28 transition-colors duration-300;
+    @apply hidden xl:flex sticky right-0 top-0 z-20 h-screen w-72 flex-col justify-between gap-8 overflow-auto border-l border-border bg-bg-primary px-6 pb-6 pt-28 transition-colors duration-300;
+  }
+
+  /* Responsive layout classes */
+  .layout-container {
+    @apply flex flex-col md:flex-row w-full;
+  }
+
+  .content-container {
+    @apply w-full max-w-4xl mx-auto md:pl-[240px] xl:px-0;
   }
 }
 
@@ -198,5 +224,22 @@
   
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent-primary))] focus:ring-opacity-50;
+  }
+
+  /* Responsive utilities */
+  .phone-only {
+    @apply block md:hidden;
+  }
+
+  .tablet-up {
+    @apply hidden md:block;
+  }
+
+  .desktop-up {
+    @apply hidden lg:block;
+  }
+
+  .tablet-only {
+    @apply hidden md:block lg:hidden;
   }
 }

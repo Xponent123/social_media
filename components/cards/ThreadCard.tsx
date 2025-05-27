@@ -50,11 +50,11 @@ function ThreadCard({
         isComment ? "border-0 shadow-none pl-0" : ""
       } mb-5`}
     >
-      <div className='flex gap-4'>
+      <div className='flex gap-3 md:gap-4'>
         {/* Author Avatar */}
         <div className='flex-shrink-0'>
           <Link href={`/profile/${author.id}`} className='block'>
-            <div className='relative h-10 w-10 overflow-hidden rounded-full'>
+            <div className='relative h-8 w-8 md:h-10 md:w-10 overflow-hidden rounded-full'>
               <Image
                 src={author.image}
                 alt={author.name}
@@ -69,7 +69,9 @@ function ThreadCard({
         <div className='flex-grow'>
           <div className='flex items-center justify-between mb-1'>
             <Link href={`/profile/${author.id}`} className='hover:underline'>
-              <h4 className='font-semibold text-text-primary'>{author.name}</h4>
+              <h4 className='font-semibold text-text-primary text-sm md:text-base truncate max-w-[120px] md:max-w-none'>
+                {author.name}
+              </h4>
             </Link>
 
             {currentUserId === author.id && (
@@ -83,14 +85,16 @@ function ThreadCard({
             )}
           </div>
 
-          <p className='text-text-secondary mb-3'>{content}</p>
+          <p className='text-text-secondary text-sm md:text-base mb-2 md:mb-3'>
+            {content}
+          </p>
 
           {/* Action Buttons */}
-          <div className='flex gap-4 mb-2'>
+          <div className='flex gap-3 md:gap-4 mb-2'>
             <button
               onClick={toggleLike}
               aria-label='like thread'
-              className='btn-icon text-text-secondary'
+              className='btn-icon text-text-secondary p-1 md:p-2'
             >
               <Image
                 src={
@@ -99,41 +103,41 @@ function ThreadCard({
                     : "/assets/heart-gray.svg"
                 }
                 alt='heart'
-                width={20}
-                height={20}
+                width={18}
+                height={18}
                 className='object-contain'
               />
             </button>
 
             <Link
               href={`/thread/${id}`}
-              className='btn-icon text-text-secondary'
+              className='btn-icon text-text-secondary p-1 md:p-2'
             >
               <Image
                 src='/assets/reply.svg'
                 alt='reply'
-                width={20}
-                height={20}
+                width={18}
+                height={18}
                 className='object-contain'
               />
             </Link>
 
-            <button className='btn-icon text-text-secondary'>
+            <button className='btn-icon text-text-secondary p-1 md:p-2'>
               <Image
                 src='/assets/repost.svg'
                 alt='repost'
-                width={20}
-                height={20}
+                width={18}
+                height={18}
                 className='object-contain'
               />
             </button>
 
-            <button className='btn-icon text-text-secondary'>
+            <button className='btn-icon text-text-secondary p-1 md:p-2'>
               <Image
                 src='/assets/share.svg'
                 alt='share'
-                width={20}
-                height={20}
+                width={18}
+                height={18}
                 className='object-contain'
               />
             </button>
@@ -141,13 +145,13 @@ function ThreadCard({
 
           {/* Comment Preview */}
           {!isComment && comments.length > 0 && (
-            <div className='flex items-center gap-2 mt-3'>
+            <div className='flex items-center gap-2 mt-2 md:mt-3'>
               <div className='flex'>
                 {comments.slice(0, 2).map((comment, index) => (
                   <div
                     key={index}
-                    className={`relative w-6 h-6 rounded-full overflow-hidden border-2 border-bg-primary ${
-                      index !== 0 ? "-ml-3" : ""
+                    className={`relative w-5 h-5 md:w-6 md:h-6 rounded-full overflow-hidden border-2 border-bg-primary ${
+                      index !== 0 ? "-ml-2 md:-ml-3" : ""
                     }`}
                   >
                     <Image
@@ -162,7 +166,7 @@ function ThreadCard({
 
               <Link
                 href={`/thread/${id}`}
-                className='text-sm text-text-muted hover:underline'
+                className='text-xs md:text-sm text-text-muted hover:underline'
               >
                 {comments.length}{" "}
                 {comments.length === 1 ? "reply" : "replies"}
@@ -172,14 +176,14 @@ function ThreadCard({
 
           {/* Community Tag */}
           {!isComment && community && (
-            <div className='mt-3 flex items-center gap-2 text-sm text-text-muted'>
+            <div className='mt-2 md:mt-3 flex items-center gap-1 md:gap-2 text-xs md:text-sm text-text-muted'>
               <span>{formatDateString(createdAt)}</span>
               <span>•</span>
               <Link
                 href={`/communities/${community.id}`}
                 className='flex items-center gap-1 hover:underline'
               >
-                <div className='relative w-4 h-4 rounded-full overflow-hidden'>
+                <div className='relative w-3 h-3 md:w-4 md:h-4 rounded-full overflow-hidden'>
                   <Image
                     src={community.image}
                     alt={community.name}
@@ -187,7 +191,9 @@ function ThreadCard({
                     className='object-cover'
                   />
                 </div>
-                <span>{community.name}</span>
+                <span className="truncate max-w-[80px] md:max-w-none">
+                  {community.name}
+                </span>
               </Link>
             </div>
           )}

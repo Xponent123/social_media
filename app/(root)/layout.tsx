@@ -33,13 +33,13 @@ export default function RootLayout({
           <ThemeProvider>
             <Topbar />
 
-            <main className='flex flex-row'>
+            <div className="layout-container">
               <LeftSidebar />
               <section className='main-container'>
-                <div className='w-full max-w-4xl'>{children}</div>
+                <div className='content-container'>{children}</div>
               </section>
               <RightSidebar />
-            </main>
+            </div>
 
             <Bottombar />
           </ThemeProvider>

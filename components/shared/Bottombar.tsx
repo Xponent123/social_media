@@ -2,19 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 
 import { sidebarLinks } from "@/constants";
 
 function Bottombar() {
   const pathname = usePathname();
-  const router = useRouter();
   const { userId } = useAuth();
 
   return (
-    <section className='bottombar'>
-      <div className='flex justify-between w-full max-w-md mx-auto'>
+    <section className='bottombar md:hidden'>
+      <div className='bottombar-container'>
         {sidebarLinks.map((link) => {
           const isActive =
             (pathname.includes(link.route) && link.route.length > 1) ||
@@ -28,7 +27,7 @@ function Bottombar() {
             <Link
               href={linkRoute}
               key={link.label}
-              className={`flex flex-col items-center p-2 rounded-lg ${
+              className={`bottombar-link ${
                 isActive ? "text-accent-primary" : "text-text-secondary"
               }`}
             >
@@ -37,10 +36,10 @@ function Bottombar() {
                 alt={link.label}
                 width={24}
                 height={24}
-                className='object-contain'
+                className='bottombar-icon object-contain'
               />
 
-              <p className='text-xs mt-1 max-sm:hidden'>
+              <p className='bottombar-text'>
                 {link.label.split(/\s+/)[0]}
               </p>
             </Link>

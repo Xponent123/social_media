@@ -13,7 +13,7 @@ const LeftSidebar = () => {
   const { userId } = useAuth();
 
   return (
-    <section className='sidebar max-md:hidden px-4 w-64'>
+    <section className='sidebar'>
       <div className='flex flex-col gap-2'>
         {sidebarLinks.map((link) => {
           const isActive =
@@ -21,9 +21,7 @@ const LeftSidebar = () => {
             pathname === link.route;
 
           const linkRoute =
-            link.route === "/profile"
-              ? `${link.route}/${userId}`
-              : link.route;
+            link.route === "/profile" ? `${link.route}/${userId}` : link.route;
 
           return (
             <Link
