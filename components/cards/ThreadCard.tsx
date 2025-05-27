@@ -91,7 +91,7 @@ function ThreadCard({
             {content}
           </p>
 
-          {/* Action Buttons - improved for visibility */}
+          {/* Action Buttons - simplified to only keep like and reply */}
           <div className='flex gap-3 md:gap-4 mb-2'>
             <button
               onClick={toggleLike}
@@ -124,26 +124,6 @@ function ThreadCard({
                 className='object-contain'
               />
             </Link>
-
-            <button className='btn-icon text-text-secondary p-1 md:p-2'>
-              <Image
-                src='/assets/repost.svg'
-                alt='repost'
-                width={18}
-                height={18}
-                className='object-contain'
-              />
-            </button>
-
-            <button className='btn-icon text-text-secondary p-1 md:p-2'>
-              <Image
-                src='/assets/share.svg'
-                alt='share'
-                width={18}
-                height={18}
-                className='object-contain'
-              />
-            </button>
           </div>
 
           {/* Comment Preview */}
