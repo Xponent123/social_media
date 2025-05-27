@@ -4,12 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
+import { useTheme } from "@/context/ThemeProvider";
 
 import { sidebarLinks } from "@/constants";
 
 function Bottombar() {
   const pathname = usePathname();
   const { userId } = useAuth();
+  const { theme } = useTheme();
 
   return (
     <section className='bottombar md:hidden'>
@@ -31,13 +33,20 @@ function Bottombar() {
                 isActive ? "text-accent-primary" : "text-text-secondary"
               }`}
             >
-              <Image
-                src={link.imgURL}
-                alt={link.label}
-                width={24}
-                height={24}
-                className='bottombar-icon object-contain'
-              />
+              <div className='relative w-6 h-6'>
+                <Image
+                  src={link.imgURL}
+                  alt={link.label}
+                  fill
+                  className='object-contain'
+                  style={{
+                    filter:
+                      theme === "light" && !isActive
+                        ? "invert(0.6) sepia(0.1) saturate(1) hue-rotate(190deg)"
+                        : "none",
+                  }}
+                />
+              </div>
               {/* Hide text labels on smallest screens */}
               <span className='bottombar-text sm:inline hidden'>
                 {link.label.split(/\s+/)[0]}

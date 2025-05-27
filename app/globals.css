@@ -138,7 +138,21 @@
   .sidebar_link.active {
     @apply bg-accent-primary/10 text-accent-primary font-medium;
   }
-
+  
+  /* Add filter for SVG icons to ensure visibility in light mode */
+  .sidebar_link img, .bottombar-icon {
+    @apply transition-all duration-200;
+    filter: brightness(0.8) contrast(1.2);
+  }
+  
+  .dark .sidebar_link img, .dark .bottombar-icon {
+    filter: brightness(1) contrast(1);
+  }
+  
+  .sidebar_link.active img {
+    filter: none;
+  }
+  
   .bottombar {
     @apply fixed bottom-0 z-10 w-full bg-bg-primary/90 backdrop-blur-md border-t border-border p-2 md:p-4 transition-colors duration-300;
   }
@@ -305,6 +319,44 @@
 
   .img-container img {
     @apply object-cover w-full h-full;
+  }
+
+  /* Activity */
+  .activity-card {
+    @apply rounded-xl bg-bg-primary border border-border p-4 transition-all duration-200;
+  }
+  
+  .activity-card:hover {
+    @apply shadow-md bg-bg-secondary/50;
+    transform: translateY(-1px);
+  }
+  
+  /* Thread count badge */
+  .thread-count-badge {
+    @apply ml-1 rounded-sm px-2 py-1 text-tiny-medium;
+    background: rgba(var(--color-accent-primary), 0.1);
+    color: rgb(var(--color-accent-primary));
+  }
+  
+  /* Thread Creation */
+  .thread-creation-card {
+    @apply bg-bg-primary rounded-xl border border-border shadow-sm p-6 transition-all duration-300;
+  }
+  
+  .character-counter {
+    @apply text-xs text-text-secondary mt-1;
+  }
+  
+  .character-counter.over-limit {
+    @apply text-red-500;
+  }
+  
+  .upload-progress-bar {
+    @apply w-full h-1 bg-bg-tertiary mt-2 rounded-full overflow-hidden;
+  }
+  
+  .upload-progress-fill {
+    @apply h-full bg-accent-primary rounded-full transition-all duration-300;
   }
 }
 

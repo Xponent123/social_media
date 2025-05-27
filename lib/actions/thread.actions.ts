@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import mongoose from "mongoose";
 
 import { connectToDB } from "../mongoose";
 
@@ -49,26 +50,40 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
 }
 
 interface Params {
-  text: string,
-  author: string,
-  communityId: string | null,
-  path: string,
+  text: string;
+  author: string;
+  communityId: string | null;
+  path: string;
 }
 
-export async function createThread({ text, author, communityId, path }: Params
-) {
+interface CreateThreadParams {
+  text: string;
+  author: string;
+  communityId: string | null;
+  path: string;
+  imageUrl?: string | null; // Add image URL parameter
+}
+
+export async function createThread({
+  text,
+  author,
+  communityId,
+  path,
+  imageUrl,
+}: CreateThreadParams) {
   try {
     connectToDB();
 
-    const communityIdObject = await Community.findOne(
-      { id: communityId },
-      { _id: 1 }
-    );
+    const communityIdObject = communityId
+      ? new mongoose.Types.ObjectId(communityId)
+      : null;
 
+    // Create thread with image URL if provided
     const createdThread = await Thread.create({
       text,
       author,
-      community: communityIdObject, // Assign communityId if provided, or leave it null for personal account
+      community: communityIdObject,
+      image: imageUrl, // Save the image URL to the thread document
     });
 
     // Update User model

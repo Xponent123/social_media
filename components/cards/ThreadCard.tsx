@@ -31,6 +31,7 @@ interface Props {
     childCount?: number; // Add this to track replies to comments
   }[];
   isComment?: boolean;
+  image?: string; // Add image property
 }
 
 function ThreadCard({
@@ -43,6 +44,7 @@ function ThreadCard({
   createdAt,
   comments,
   isComment,
+  image, // Add image parameter
 }: Props) {
   const [liked, setLiked] = useState(false);
   const toggleLike = () => {
@@ -108,6 +110,19 @@ function ThreadCard({
           <p className='text-text-secondary text-sm md:text-base mb-2 md:mb-3'>
             {content}
           </p>
+
+          {/* Thread Image - Add this section */}
+          {image && (
+            <div className="mb-3 rounded-lg overflow-hidden">
+              <Image
+                src={image}
+                alt="Thread image"
+                width={500}
+                height={300}
+                className="object-cover w-full max-h-[350px]"
+              />
+            </div>
+          )}
 
           {/* Action Buttons with animations */}
           <div className='flex gap-3 md:gap-4 mb-2'>
