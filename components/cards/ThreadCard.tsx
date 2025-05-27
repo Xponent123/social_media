@@ -1,8 +1,7 @@
-'use client';
-
-import { useState } from "react";
+"use client";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 
 import { formatDateString } from "@/lib/utils";
 import DeleteThread from "../forms/DeleteThread";
@@ -42,141 +41,158 @@ function ThreadCard({
   comments,
   isComment,
 }: Props) {
-  const [isLiked, setIsLiked] = useState(false);
-
-  const toggleLike = () => {
-    setIsLiked((prev) => !prev);
-  };
+  const [liked, setLiked] = useState(false);
+  const toggleLike = () => setLiked((prev) => !prev);
 
   return (
     <article
-      className={`flex w-full flex-col rounded-xl ${
-        isComment ? "px-0 xs:px-7" : "bg-dark-2 p-7"
-      }`}
+      className={`thread-card ${
+        isComment ? "border-0 shadow-none pl-0" : ""
+      } mb-5`}
     >
-      <div className='flex items-start justify-between'>
-        <div className='flex w-full flex-1 flex-row gap-4'>
-          <div className='flex flex-col items-center'>
-            <Link href={`/profile/${author.id}`} className='relative h-11 w-11'>
+      <div className='flex gap-4'>
+        {/* Author Avatar */}
+        <div className='flex-shrink-0'>
+          <Link href={`/profile/${author.id}`} className='block'>
+            <div className='relative h-10 w-10 overflow-hidden rounded-full'>
               <Image
                 src={author.image}
-                alt='user_community_image'
+                alt={author.name}
                 fill
-                className='cursor-pointer rounded-full'
+                className='object-cover'
+              />
+            </div>
+          </Link>
+        </div>
+
+        {/* Thread Content */}
+        <div className='flex-grow'>
+          <div className='flex items-center justify-between mb-1'>
+            <Link href={`/profile/${author.id}`} className='hover:underline'>
+              <h4 className='font-semibold text-text-primary'>{author.name}</h4>
+            </Link>
+
+            {currentUserId === author.id && (
+              <DeleteThread
+                threadId={JSON.stringify(id)}
+                currentUserId={currentUserId}
+                authorId={author.id}
+                parentId={parentId}
+                isComment={isComment}
+              />
+            )}
+          </div>
+
+          <p className='text-text-secondary mb-3'>{content}</p>
+
+          {/* Action Buttons */}
+          <div className='flex gap-4 mb-2'>
+            <button
+              onClick={toggleLike}
+              aria-label='like thread'
+              className='btn-icon text-text-secondary'
+            >
+              <Image
+                src={
+                  liked
+                    ? "/assets/heart-filled.svg"
+                    : "/assets/heart-gray.svg"
+                }
+                alt='heart'
+                width={20}
+                height={20}
+                className='object-contain'
+              />
+            </button>
+
+            <Link
+              href={`/thread/${id}`}
+              className='btn-icon text-text-secondary'
+            >
+              <Image
+                src='/assets/reply.svg'
+                alt='reply'
+                width={20}
+                height={20}
+                className='object-contain'
               />
             </Link>
 
-            <div className='thread-card_bar' />
+            <button className='btn-icon text-text-secondary'>
+              <Image
+                src='/assets/repost.svg'
+                alt='repost'
+                width={20}
+                height={20}
+                className='object-contain'
+              />
+            </button>
+
+            <button className='btn-icon text-text-secondary'>
+              <Image
+                src='/assets/share.svg'
+                alt='share'
+                width={20}
+                height={20}
+                className='object-contain'
+              />
+            </button>
           </div>
 
-          <div className='flex w-full flex-col'>
-            <Link href={`/profile/${author.id}`} className='w-fit'>
-              <h4 className='cursor-pointer text-base-semibold text-light-1'>
-                {author.name}
-              </h4>
-            </Link>
-
-            <p className='mt-2 text-small-regular text-light-2'>{content}</p>
-
-            <div className={`${isComment && "mb-10"} mt-5 flex flex-col gap-3`}>
-              <div className='flex gap-3.5'>
-                <Image
-                  src={
-                    isLiked
-                      ? "/assets/heart-filled.svg"
-                      : "/assets/heart-gray.svg"
-                  }
-                  alt='heart'
-                  width={24}
-                  height={24}
-                  className='cursor-pointer object-contain'
-                  onClick={toggleLike}
-                />
-                <Link href={`/thread/${id}`}>
-                  <Image
-                    src='/assets/reply.svg'
-                    alt='reply'
-                    width={24}
-                    height={24}
-                    className='cursor-pointer object-contain'
-                  />
-                </Link>
-                <Image
-                  src='/assets/repost.svg'
-                  alt='repost'
-                  width={24}
-                  height={24}
-                  className='cursor-pointer object-contain'
-                />
-                <Image
-                  src='/assets/share.svg'
-                  alt='share'
-                  width={24}
-                  height={24}
-                  className='cursor-pointer object-contain'
-                />
+          {/* Comment Preview */}
+          {!isComment && comments.length > 0 && (
+            <div className='flex items-center gap-2 mt-3'>
+              <div className='flex'>
+                {comments.slice(0, 2).map((comment, index) => (
+                  <div
+                    key={index}
+                    className={`relative w-6 h-6 rounded-full overflow-hidden border-2 border-bg-primary ${
+                      index !== 0 ? "-ml-3" : ""
+                    }`}
+                  >
+                    <Image
+                      src={comment.author.image}
+                      alt={`commenter_${index}`}
+                      fill
+                      className='object-cover'
+                    />
+                  </div>
+                ))}
               </div>
 
-              {isComment && comments.length > 0 && (
-                <Link href={`/thread/${id}`}>
-                  <p className='mt-1 text-subtle-medium text-gray-1'>
-                    {comments.length} repl{comments.length > 1 ? "ies" : "y"}
-                  </p>
-                </Link>
-              )}
+              <Link
+                href={`/thread/${id}`}
+                className='text-sm text-text-muted hover:underline'
+              >
+                {comments.length}{" "}
+                {comments.length === 1 ? "reply" : "replies"}
+              </Link>
             </div>
-          </div>
-        </div>
+          )}
 
-        <DeleteThread
-          threadId={JSON.stringify(id)}
-          currentUserId={currentUserId}
-          authorId={author.id}
-          parentId={parentId}
-          isComment={isComment}
-        />
+          {/* Community Tag */}
+          {!isComment && community && (
+            <div className='mt-3 flex items-center gap-2 text-sm text-text-muted'>
+              <span>{formatDateString(createdAt)}</span>
+              <span>•</span>
+              <Link
+                href={`/communities/${community.id}`}
+                className='flex items-center gap-1 hover:underline'
+              >
+                <div className='relative w-4 h-4 rounded-full overflow-hidden'>
+                  <Image
+                    src={community.image}
+                    alt={community.name}
+                    fill
+                    className='object-cover'
+                  />
+                </div>
+                <span>{community.name}</span>
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
-
-      {!isComment && comments.length > 0 && (
-        <div className='ml-1 mt-3 flex items-center gap-2'>
-          {comments.slice(0, 2).map((comment, index) => (
-            <Image
-              key={index}
-              src={comment.author.image}
-              alt={`user_${index}`}
-              width={24}
-              height={24}
-              className={`${index !== 0 && "-ml-5"} rounded-full object-cover`}
-            />
-          ))}
-
-          <Link href={`/thread/${id}`}>
-            <p className='mt-1 text-subtle-medium text-gray-1'>
-              {comments.length} repl{comments.length > 1 ? "ies" : "y"}
-            </p>
-          </Link>
-        </div>
-      )}
-
-      {!isComment && community && (
-        <Link
-          href={`/communities/${community.id}`}
-          className='mt-5 flex items-center'
-        >
-          <p className='text-subtle-medium text-gray-1'>
-            {formatDateString(createdAt)}
-            {community && ` - ${community.name} Community`}
-          </p>
-
-          <Image
-            src={community.image}
-            alt={community.name}
-            width={14}
-            height={14}
-            className='ml-1 rounded-full object-cover'
-          />
-        </Link>
-      )}
     </article>
   );
 }

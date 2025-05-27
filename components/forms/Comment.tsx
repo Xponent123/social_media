@@ -1,10 +1,11 @@
 "use client";
 
-import { z } from "zod";
-import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { usePathname } from "next/navigation";
+import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 import {
   Form,
@@ -13,9 +14,6 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
 
 import { CommentValidation } from "@/lib/validations/thread";
 import { addCommentToThread } from "@/lib/actions/thread.actions";
@@ -26,10 +24,11 @@ interface Props {
   currentUserId: string;
 }
 
-function Comment({ threadId, currentUserImg, currentUserId }: Props) {
+const Comment = ({ threadId, currentUserImg, currentUserId }: Props) => {
+  const router = useRouter();
   const pathname = usePathname();
 
-  const form = useForm<z.infer<typeof CommentValidation>>({
+  const form = useForm({
     resolver: zodResolver(CommentValidation),
     defaultValues: {
       thread: "",
@@ -45,43 +44,59 @@ function Comment({ threadId, currentUserImg, currentUserId }: Props) {
     );
 
     form.reset();
+    router.refresh();
   };
 
   return (
     <Form {...form}>
-      <form className='comment-form' onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField
-          control={form.control}
-          name='thread'
-          render={({ field }) => (
-            <FormItem className='flex w-full items-center gap-3'>
-              <FormLabel>
-                <Image
-                  src={currentUserImg}
-                  alt='current_user'
-                  width={48}
-                  height={48}
-                  className='rounded-full object-cover'
-                />
-              </FormLabel>
-              <FormControl className='border-none bg-transparent'>
-                <Input
-                  type='text'
-                  {...field}
-                  placeholder='Comment...'
-                  className='no-focus text-light-1 outline-none'
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className='bg-bg-primary rounded-xl border border-border shadow-sm p-4 mb-8'
+      >
+        <div className='flex flex-col gap-3'>
+          <h3 className='text-base-semibold text-text-primary'>Post your reply</h3>
 
-        <Button type='submit' className='comment-form_btn'>
-          Reply
-        </Button>
+          <div className='flex items-start gap-4'>
+            <div className='flex-shrink-0 mt-1'>
+              <Image
+                src={currentUserImg}
+                alt='Profile image'
+                width={36}
+                height={36}
+                className='rounded-full object-cover'
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name='thread'
+              render={({ field }) => (
+                <FormItem className='flex-grow'>
+                  <FormControl>
+                    <textarea
+                      placeholder='Write your thoughts...'
+                      className='w-full min-h-24 bg-bg-tertiary border-none rounded-lg p-3 text-text-primary resize-none focus:ring-2 focus:ring-accent-primary/30 transition-all duration-200'
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className='flex justify-end'>
+            <button
+              type='submit'
+              className='btn-primary px-8'
+              disabled={form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? "Posting..." : "Reply"}
+            </button>
+          </div>
+        </div>
       </form>
     </Form>
   );
-}
+};
 
 export default Comment;

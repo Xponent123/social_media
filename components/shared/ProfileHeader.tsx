@@ -21,44 +21,42 @@ function ProfileHeader({
   type,
 }: Props) {
   return (
-    <div className='flex w-full flex-col justify-start'>
+    <div className='profile-header'>
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-3'>
-          <div className='relative h-20 w-20 object-cover'>
+          <div className='relative h-20 w-20 overflow-hidden rounded-full'>
             <Image
               src={imgUrl}
-              alt='logo'
+              alt={`${name}'s profile picture`}
               fill
-              className='rounded-full object-cover shadow-2xl'
+              className='object-cover'
             />
           </div>
 
           <div className='flex-1'>
-            <h2 className='text-left text-heading3-bold text-light-1'>
-              {name}
-            </h2>
-            <p className='text-base-medium text-gray-1'>@{username}</p>
+            <h2 className='text-heading3-bold text-text-primary'>{name}</h2>
+            <p className='text-base-medium text-text-secondary'>@{username}</p>
           </div>
         </div>
+
         {accountId === authUserId && type !== "Community" && (
           <Link href='/profile/edit'>
-            <div className='flex cursor-pointer gap-3 rounded-lg bg-dark-3 px-4 py-2'>
+            <div className='btn-secondary flex items-center gap-2'>
               <Image
                 src='/assets/edit.svg'
-                alt='logout'
+                alt='Edit profile'
                 width={16}
                 height={16}
               />
-
-              <p className='text-light-2 max-sm:hidden'>Edit</p>
+              <span className='max-sm:hidden'>Edit</span>
             </div>
           </Link>
         )}
       </div>
 
-      <p className='mt-6 max-w-lg text-base-regular text-light-2'>{bio}</p>
+      <p className='mt-6 max-w-lg text-base-regular text-text-secondary'>{bio}</p>
 
-      <div className='mt-12 h-0.5 w-full bg-dark-3' />
+      <div className='mt-12 h-0.5 w-full bg-border' />
     </div>
   );
 }

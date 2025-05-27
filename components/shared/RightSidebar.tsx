@@ -14,55 +14,50 @@ async function RightSidebar() {
     pageSize: 4,
   });
 
-  const suggestedCOmmunities = await fetchCommunities({ pageSize: 4 });
+  const suggestedCommunities = await fetchCommunities({ pageSize: 4 });
 
   return (
     <section className='custom-scrollbar rightsidebar'>
-      <div className='flex flex-1 flex-col justify-start'>
-        <h3 className='text-heading4-medium text-light-1'>
+      <div className='flex flex-col gap-6'>
+        <h3 className='text-heading4-bold text-text-primary'>
           Suggested Communities
         </h3>
-
-        <div className='mt-7 flex w-[350px] flex-col gap-9'>
-          {suggestedCOmmunities.communities.length > 0 ? (
-            <>
-              {suggestedCOmmunities.communities.map((community) => (
-                <UserCard
-                  key={community.id}
-                  id={community.id}
-                  name={community.name}
-                  username={community.username}
-                  imgUrl={community.image}
-                  personType='Community'
-                />
-              ))}
-            </>
+        <div className='flex flex-col gap-4'>
+          {suggestedCommunities.communities.length > 0 ? (
+            suggestedCommunities.communities.map((community) => (
+              <UserCard
+                key={community.id}
+                id={community.id}
+                name={community.name}
+                username={community.username}
+                imgUrl={community.image}
+                personType='Community'
+              />
+            ))
           ) : (
-            <p className='!text-base-regular text-light-3'>
+            <p className='text-text-secondary text-base-medium'>
               No communities yet
             </p>
           )}
         </div>
       </div>
 
-      <div className='flex flex-1 flex-col justify-start'>
-        <h3 className='text-heading4-medium text-light-1'>Similar Minds</h3>
-        <div className='mt-7 flex w-[350px] flex-col gap-10'>
+      <div className='mt-8 flex flex-col gap-6'>
+        <h3 className='text-heading4-bold text-text-primary'>Similar Minds</h3>
+        <div className='flex flex-col gap-4'>
           {similarMinds.users.length > 0 ? (
-            <>
-              {similarMinds.users.map((person) => (
-                <UserCard
-                  key={person.id}
-                  id={person.id}
-                  name={person.name}
-                  username={person.username}
-                  imgUrl={person.image}
-                  personType='User'
-                />
-              ))}
-            </>
+            similarMinds.users.map((person) => (
+              <UserCard
+                key={person.id}
+                id={person.id}
+                name={person.name}
+                username={person.username}
+                imgUrl={person.image}
+                personType='User'
+              />
+            ))
           ) : (
-            <p className='!text-base-regular text-light-3'>No users yet</p>
+            <p className='text-text-secondary text-base-medium'>No users yet</p>
           )}
         </div>
       </div>

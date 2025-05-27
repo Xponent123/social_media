@@ -2,160 +2,190 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    /* Light theme variables */
+    --color-bg-primary: 255, 255, 255; /* White */
+    --color-bg-secondary: 247, 249, 252; /* Light Gray */
+    --color-bg-tertiary: 237, 242, 247; /* Lighter Gray */
+    
+    --color-text-primary: 15, 23, 42; /* Dark Blue */
+    --color-text-secondary: 71, 85, 105; /* Slate */
+    --color-text-muted: 148, 163, 184; /* Light Slate */
+    
+    --color-accent-primary: 79, 70, 229; /* Indigo */
+    --color-accent-secondary: 139, 92, 246; /* Purple */
+    --color-accent-muted: 199, 210, 254; /* Light Purple */
+    
+    --color-border: 226, 232, 240; /* Very Light Gray */
+    --color-shadow: 0, 0, 0; /* Black for shadow */
+  }
+
+  .dark {
+    /* Dark theme variables */
+    --color-bg-primary: 15, 23, 42; /* Dark Blue */
+    --color-bg-secondary: 30, 41, 59; /* Darker Blue */
+    --color-bg-tertiary: 51, 65, 85; /* Slate Blue */
+    
+    --color-text-primary: 248, 250, 252; /* Off White */
+    --color-text-secondary: 203, 213, 225; /* Light Gray */
+    --color-text-muted: 148, 163, 184; /* Slate */
+    
+    --color-accent-primary: 139, 92, 246; /* Purple */
+    --color-accent-secondary: 192, 132, 252; /* Light Purple */
+    --color-accent-muted: 107, 33, 168; /* Dark Purple */
+    
+    --color-border: 51, 65, 85; /* Slate Blue */
+    --color-shadow: 0, 0, 0; /* Black for shadow */
+  }
+}
+
 @layer components {
-  /* main */
+  /* Main layout */
   .main-container {
-    @apply flex min-h-screen flex-1 flex-col items-center bg-dark-1 px-6 pb-10 pt-28 max-md:pb-32 sm:px-10;
+    @apply flex min-h-screen flex-1 flex-col items-center bg-bg-primary px-6 pb-10 pt-28 max-md:pb-32 sm:px-10 transition-colors duration-300;
+    background-image: linear-gradient(to bottom, 
+      rgb(var(--color-bg-primary)), 
+      rgb(var(--color-bg-secondary)));
   }
 
   /* Head Text */
   .head-text {
-    @apply text-heading2-bold text-light-1;
+    @apply text-heading2-bold text-text-primary mb-6;
   }
 
-  /* Activity */
-  .activity-card {
-    @apply flex items-center gap-2 rounded-md bg-dark-2 px-7 py-4;
+  /* Cards */
+  .card {
+    @apply rounded-xl bg-bg-primary border border-border shadow-sm p-6 transition-all duration-300;
   }
 
-  /* No Result */
-  .no-result {
-    @apply text-center !text-base-regular text-light-3;
+  /* Thread card */
+  .thread-card {
+    @apply card hover:shadow-md;
   }
-
-  /* Community Card */
-  .community-card {
-    @apply w-full rounded-lg bg-dark-3 px-4 py-5 sm:w-96;
-  }
-
-  .community-card_btn {
-    @apply rounded-lg bg-primary-500 px-5 py-1.5 text-small-regular !text-light-1 !important;
-  }
-
-  /* thread card  */
+  
   .thread-card_bar {
-    @apply relative mt-2 w-0.5 grow rounded-full bg-neutral-800;
+    @apply relative mt-2 w-0.5 grow rounded-full bg-border;
   }
 
-  /* User card */
-  .user-card {
-    @apply flex flex-col justify-between gap-4 max-xs:rounded-xl max-xs:bg-dark-3 max-xs:p-4 xs:flex-row xs:items-center;
-  }
-
-  .user-card_avatar {
-    @apply flex flex-1 items-start justify-start gap-3 xs:items-center;
-  }
-
-  .user-card_btn {
-    @apply h-auto min-w-[74px] rounded-lg bg-primary-500 text-[12px] text-light-1 !important;
-  }
-
-  .searchbar {
-    @apply flex gap-1 rounded-lg bg-dark-3 px-4 py-2;
-  }
-
-  .searchbar_input {
-    @apply border-none bg-dark-3 text-base-regular text-light-4 outline-none !important;
-  }
-
+  /* Navigation */
   .topbar {
-    @apply fixed top-0 z-30 flex w-full items-center justify-between bg-dark-2 px-6 py-3;
+    @apply fixed top-0 z-30 flex w-full items-center justify-between bg-bg-primary/80 backdrop-blur-md border-b border-border px-6 py-4 transition-colors duration-300;
+  }
+
+  .sidebar {
+    @apply fixed left-0 top-0 z-20 flex h-screen w-fit flex-col justify-between overflow-auto border-r border-border bg-bg-primary pt-28 pb-5 transition-colors duration-300;
+  }
+  
+  .sidebar_link {
+    @apply flex items-center gap-3 rounded-lg px-4 py-3 text-text-secondary hover:bg-bg-tertiary transition-colors duration-200;
+  }
+  
+  .sidebar_link.active {
+    @apply bg-accent-primary/10 text-accent-primary font-medium;
   }
 
   .bottombar {
-    @apply fixed bottom-0 z-10 w-full rounded-t-3xl bg-glassmorphism p-4 backdrop-blur-lg xs:px-7 md:hidden;
+    @apply fixed bottom-0 z-10 w-full bg-bg-primary/80 backdrop-blur-md border-t border-border p-4 transition-colors duration-300 md:hidden;
   }
 
-  .bottombar_container {
-    @apply flex items-center justify-between gap-3 xs:gap-5;
+  /* Buttons */
+  .btn-primary {
+    @apply px-4 py-2 rounded-lg bg-accent-primary text-white font-medium hover:bg-accent-secondary transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2 rounded-lg bg-bg-tertiary text-text-secondary font-medium hover:bg-border transition-colors duration-200;
+  }
+  
+  .btn-icon {
+    @apply p-2 rounded-full hover:bg-bg-tertiary transition-colors duration-200;
   }
 
-  .bottombar_link {
-    @apply relative flex flex-col items-center gap-2 rounded-lg p-2 sm:flex-1 sm:px-2 sm:py-2.5;
+  /* Forms */
+  .input {
+    @apply w-full rounded-lg border border-border bg-bg-primary px-4 py-2 text-text-primary outline-none focus:ring-2 focus:ring-accent-primary/50 transition-all duration-200;
+  }
+  
+  .textarea {
+    @apply w-full rounded-lg border border-border bg-bg-primary px-4 py-2 text-text-primary outline-none focus:ring-2 focus:ring-accent-primary/50 transition-all duration-200;
   }
 
-  .leftsidebar {
-    @apply sticky left-0 top-0 z-20 flex h-screen w-fit flex-col justify-between overflow-auto border-r border-r-dark-4 bg-dark-2 pb-5 pt-28 max-md:hidden;
+  /* User profile */
+  .profile-header {
+    @apply card mb-6;
   }
 
-  .leftsidebar_link {
-    @apply relative flex justify-start gap-4 rounded-lg p-4;
+  /* Tabs */
+  .tab-list {
+    @apply flex w-full border-b border-border;
+  }
+  
+  .tab {
+    @apply px-4 py-2 font-medium text-text-secondary border-b-2 border-transparent hover:text-text-primary transition-colors duration-200;
+  }
+  
+  .tab.active {
+    @apply text-accent-primary border-accent-primary;
   }
 
-  .pagination {
-    @apply mt-10 flex w-full items-center justify-center gap-5;
+  /* Search */
+  .searchbar {
+    @apply flex items-center gap-2 rounded-lg border border-border bg-bg-primary px-4 py-2 focus-within:ring-2 focus-within:ring-accent-primary/50 transition-all duration-200;
+  }
+  
+  .searchbar_input {
+    @apply border-none bg-transparent text-text-primary outline-none placeholder:text-text-muted;
   }
 
   .rightsidebar {
-    @apply sticky right-0 top-0 z-20 flex h-screen w-fit flex-col justify-between gap-12 overflow-auto border-l border-l-dark-4 bg-dark-2 px-10 pb-6 pt-28 max-xl:hidden;
+    @apply sticky right-0 top-0 z-20 flex h-screen w-fit flex-col justify-between gap-12 overflow-auto border-l border-border bg-bg-primary px-10 pb-6 pt-28 transition-colors duration-300;
   }
 }
 
+/* Custom utilities */
 @layer utilities {
-  .css-invert {
-    @apply invert-[50%] brightness-200;
+  .bg-primary {
+    @apply bg-opacity-100 bg-[rgb(var(--color-bg-primary))];
   }
-
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 3px;
-    height: 3px;
-    border-radius: 2px;
+  
+  .bg-secondary {
+    @apply bg-opacity-100 bg-[rgb(var(--color-bg-secondary))];
   }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #09090a;
+  
+  .bg-tertiary {
+    @apply bg-opacity-100 bg-[rgb(var(--color-bg-tertiary))];
   }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #5c5c7b;
-    border-radius: 50px;
+  
+  .bg-accent-primary {
+    @apply bg-opacity-100 bg-[rgb(var(--color-accent-primary))];
   }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #7878a3;
+  
+  .bg-accent-secondary {
+    @apply bg-opacity-100 bg-[rgb(var(--color-accent-secondary))];
   }
-}
-
-/* Clerk Responsive fix */
-.cl-organizationSwitcherTrigger .cl-userPreview .cl-userPreviewTextContainer {
-  @apply max-sm:hidden;
-}
-
-.cl-organizationSwitcherTrigger
-  .cl-organizationPreview
-  .cl-organizationPreviewTextContainer {
-  @apply max-sm:hidden;
-}
-
-/* Shadcn Component Styles */
-
-/* Tab */
-.tab {
-  @apply flex min-h-[50px] flex-1 items-center gap-3 bg-dark-2 text-light-2 data-[state=active]:bg-[#0e0e12] data-[state=active]:text-light-2 !important;
-}
-
-.no-focus {
-  @apply focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0 !important;
-}
-
-/* Account Profile  */
-.account-form_image-label {
-  @apply flex h-24 w-24 items-center justify-center rounded-full bg-dark-4 !important;
-}
-
-.account-form_image-input {
-  @apply cursor-pointer border-none bg-transparent outline-none file:text-blue !important;
-}
-
-.account-form_input {
-  @apply border border-dark-4 bg-dark-3 text-light-1 !important;
-}
-
-/* Comment Form */
-.comment-form {
-  @apply mt-10 flex items-center gap-4 border-y border-y-dark-4 py-5 max-xs:flex-col !important;
-}
-
-.comment-form_btn {
-  @apply rounded-3xl bg-primary-500 px-8 py-2 !text-small-regular text-light-1 max-xs:w-full !important;
+  
+  .text-primary {
+    @apply text-[rgb(var(--color-text-primary))];
+  }
+  
+  .text-secondary {
+    @apply text-[rgb(var(--color-text-secondary))];
+  }
+  
+  .text-muted {
+    @apply text-[rgb(var(--color-text-muted))];
+  }
+  
+  .text-accent {
+    @apply text-[rgb(var(--color-accent-primary))];
+  }
+  
+  .border-color {
+    @apply border-[rgb(var(--color-border))];
+  }
+  
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent-primary))] focus:ring-opacity-50;
+  }
 }
