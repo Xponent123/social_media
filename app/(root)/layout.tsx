@@ -35,9 +35,9 @@ export default function RootLayout({
 
             <div className="layout-container">
               <LeftSidebar />
-              <section className='main-container'>
+              <main className='main-container'>
                 <div className='content-container'>{children}</div>
-              </section>
+              </main>
               <RightSidebar />
             </div>
 

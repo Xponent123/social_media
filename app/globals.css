@@ -22,20 +22,20 @@
   }
 
   .dark {
-    /* Dark theme variables */
-    --color-bg-primary: 15, 23, 42; /* Dark Blue */
-    --color-bg-secondary: 30, 41, 59; /* Darker Blue */
-    --color-bg-tertiary: 51, 65, 85; /* Slate Blue */
+    /* Dark theme variables - updated for a darker look */
+    --color-bg-primary: 10, 15, 30; /* Darker blue-black */
+    --color-bg-secondary: 17, 24, 39; /* Darker background */
+    --color-bg-tertiary: 31, 41, 55; /* Darker slate */
     
     --color-text-primary: 248, 250, 252; /* Off White */
     --color-text-secondary: 203, 213, 225; /* Light Gray */
     --color-text-muted: 148, 163, 184; /* Slate */
     
     --color-accent-primary: 139, 92, 246; /* Purple */
-    --color-accent-secondary: 192, 132, 252; /* Light Purple */
-    --color-accent-muted: 107, 33, 168; /* Dark Purple */
+    --color-accent-secondary: 167, 139, 250; /* Brighter purple for better contrast */
+    --color-accent-muted: 91, 33, 182; /* Deeper purple */
     
-    --color-border: 51, 65, 85; /* Slate Blue */
+    --color-border: 45, 55, 72; /* Darker border */
     --color-shadow: 0, 0, 0; /* Black for shadow */
   }
   
@@ -72,7 +72,8 @@
 
   /* Thread card */
   .thread-card {
-    @apply card hover:shadow-md;
+    @apply card hover:shadow-md w-full box-border;
+    max-width: 100%;
   }
   
   .thread-card_bar {
@@ -85,7 +86,7 @@
   }
 
   .sidebar {
-    @apply fixed left-0 top-0 z-20 hidden md:flex h-screen w-fit flex-col justify-between overflow-auto border-r border-border bg-bg-primary pt-28 pb-5 transition-colors duration-300;
+    @apply fixed left-0 top-0 z-20 hidden md:flex h-screen flex-col justify-between overflow-auto border-r border-border bg-bg-primary pt-28 pb-5 transition-colors duration-300;
     width: 240px;
   }
   
@@ -167,16 +168,58 @@
   }
 
   .rightsidebar {
-    @apply hidden xl:flex sticky right-0 top-0 z-20 h-screen w-72 flex-col justify-between gap-8 overflow-auto border-l border-border bg-bg-primary px-6 pb-6 pt-28 transition-colors duration-300;
+    @apply hidden xl:flex sticky right-0 top-0 z-20 h-screen flex-col justify-between gap-8 overflow-auto border-l border-border bg-bg-primary px-6 pb-6 pt-28 transition-colors duration-300;
+    width: 288px; /* Fixed width for right sidebar */
   }
 
-  /* Responsive layout classes */
+  /* Layout container - refined for better responsiveness */
   .layout-container {
     @apply flex flex-col md:flex-row w-full;
   }
 
+  /* Content container - improved to prevent overlap */
   .content-container {
-    @apply w-full max-w-4xl mx-auto md:pl-[240px] xl:px-0;
+    @apply w-full transition-all duration-300;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Improved responsive adjustments for different screen sizes */
+  @media (min-width: 768px) {
+    .content-container {
+      width: calc(100% - 240px); /* Adjust for sidebar */
+      margin-left: 240px; /* Width of sidebar */
+      padding-left: 1rem;
+      padding-right: 1rem;
+      max-width: 768px; /* Set a reasonable max-width */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .content-container {
+      max-width: 800px;
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .content-container {
+      width: calc(100% - 240px - 288px); /* Adjust for both sidebars (sidebar + rightsidebar) */
+      max-width: 900px;
+    }
+  }
+
+  /* Fix image display issues */
+  .img-container {
+    @apply relative overflow-hidden;
+  }
+
+  .img-container img {
+    @apply object-cover w-full h-full;
   }
 }
 
@@ -242,4 +285,29 @@
   .tablet-only {
     @apply hidden md:block lg:hidden;
   }
+
+  .fixed-width-content {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  @media (min-width: 768px) {
+    .fixed-width-content {
+      max-width: calc(100% - 260px);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .fixed-width-content {
+      max-width: calc(100% - 260px - 308px);
+    }
+  }
+}
+
+/* Additional rules to ensure image visibility */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }

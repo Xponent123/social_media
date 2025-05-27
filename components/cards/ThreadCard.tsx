@@ -48,25 +48,27 @@ function ThreadCard({
     <article
       className={`thread-card ${
         isComment ? "border-0 shadow-none pl-0" : ""
-      } mb-5`}
+      } mb-5 w-full max-w-full`}
     >
-      <div className='flex gap-3 md:gap-4'>
-        {/* Author Avatar */}
+      <div className='flex gap-3 md:gap-4 w-full'>
+        {/* Author Avatar - improved for visibility */}
         <div className='flex-shrink-0'>
           <Link href={`/profile/${author.id}`} className='block'>
-            <div className='relative h-8 w-8 md:h-10 md:w-10 overflow-hidden rounded-full'>
+            <div className='relative h-8 w-8 md:h-10 md:w-10 overflow-hidden rounded-full bg-bg-tertiary'>
               <Image
                 src={author.image}
                 alt={author.name}
                 fill
+                sizes="(max-width: 768px) 32px, 40px"
                 className='object-cover'
+                priority
               />
             </div>
           </Link>
         </div>
 
         {/* Thread Content */}
-        <div className='flex-grow'>
+        <div className='flex-grow min-w-0 overflow-hidden'> {/* Added overflow handling */}
           <div className='flex items-center justify-between mb-1'>
             <Link href={`/profile/${author.id}`} className='hover:underline'>
               <h4 className='font-semibold text-text-primary text-sm md:text-base truncate max-w-[120px] md:max-w-none'>
@@ -89,7 +91,7 @@ function ThreadCard({
             {content}
           </p>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - improved for visibility */}
           <div className='flex gap-3 md:gap-4 mb-2'>
             <button
               onClick={toggleLike}
@@ -106,6 +108,7 @@ function ThreadCard({
                 width={18}
                 height={18}
                 className='object-contain'
+                priority
               />
             </button>
 
