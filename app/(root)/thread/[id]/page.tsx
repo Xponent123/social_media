@@ -3,6 +3,8 @@ import { currentUser } from "@clerk/nextjs";
 
 import Comment from "@/components/forms/Comment";
 import ThreadCard from "@/components/cards/ThreadCard";
+import CommentThread from "@/components/cards/CommentThread";
+import { serializeCommentTree } from "@/components/cards/serializeCommentTree";
 
 import { fetchUser } from "@/lib/actions/user.actions";
 import { fetchThreadById } from "@/lib/actions/thread.actions";
@@ -50,40 +52,28 @@ async function page({ params }: { params: { id: string } }) {
 
   const thread = await fetchThreadById(params.id);
 
-  const serializeThread = (t: any): SerializedThread => ({
-    id: t._id.toString(),
-    parentId: t.parentId?.toString() || null,
-    content: t.text,
-    createdAt: t.createdAt.toString(),
-    author: {
-      id: t.author._id.toString(),
-      name: t.author.name,
-      image: t.author.image,
-    },
-    community: t.community
-      ? {
-          id: t.community._id.toString(),
-          name: t.community.name,
-          image: t.community.image,
-        }
-      : null,
-    comments: (t.children || []).map((child: any) => ({
-      author: {
-        image: child.author.image,
-      },
-      childCount: child.children?.length || 0, // Include count of nested replies
-    })),
-  });
 
-  const serializedMainThread = serializeThread(thread);
-  const serializedReplies = (thread.children || []).map(serializeThread);
+  // Recursively serialize the thread and all nested children
+  const serializedMainThread = serializeCommentTree(thread);
+
+  if (!serializedMainThread) return null;
 
   return (
     <section className='relative'>
       <div>
         <ThreadCard
-          {...serializedMainThread}
+          id={serializedMainThread.id}
           currentUserId={user.id}
+          parentId={serializedMainThread.parentId}
+          content={serializedMainThread.content}
+          author={serializedMainThread.author}
+          community={serializedMainThread.community}
+          createdAt={serializedMainThread.createdAt}
+          comments={serializedMainThread.comments?.map((c: any) => ({
+            author: { image: c.author?.image },
+            childCount: c.comments?.length || 0
+          })) || []}
+          image={serializedMainThread.image}
         />
       </div>
 
@@ -96,12 +86,11 @@ async function page({ params }: { params: { id: string } }) {
       </div>
 
       <div className='mt-10'>
-        {serializedReplies.map((reply: SerializedThread) => (
-          <ThreadCard
+        {serializedMainThread.comments?.map((reply: any) => (
+          <CommentThread
             key={reply.id}
-            {...reply}
+            comment={reply}
             currentUserId={user.id}
-            isComment
           />
         ))}
       </div>

@@ -21,6 +21,10 @@ const threadSchema = new mongoose.Schema({
   parentId: {
     type: String,
   },
+  image: {
+    type: String,
+    default: null,
+  },
   children: [
     {
       type: mongoose.Schema.Types.ObjectId,

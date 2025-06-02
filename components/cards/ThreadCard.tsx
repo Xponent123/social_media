@@ -111,16 +111,20 @@ function ThreadCard({
             {content}
           </p>
 
-          {/* Thread Image - Add this section */}
+          {/* Media rendering: show image or video */}
           {image && (
             <div className="mb-3 rounded-lg overflow-hidden">
-              <Image
-                src={image}
-                alt="Thread image"
-                width={500}
-                height={300}
-                className="object-cover w-full max-h-[350px]"
-              />
+              {image.match(/\.(mp4|webm|ogg)$/i) ? (
+                <video src={image} controls className="object-cover w-full max-h-[350px] bg-black" />
+              ) : (
+                <Image
+                  src={image}
+                  alt="Thread media"
+                  width={500}
+                  height={300}
+                  className="object-cover w-full max-h-[350px]"
+                />
+              )}
             </div>
           )}
 

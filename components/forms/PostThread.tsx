@@ -1,13 +1,14 @@
 "use client";
 
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, usePathname } from "next/navigation";
 import * as z from "zod";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Send } from "lucide-react";
+import { Send, Image as ImageIcon, Video as VideoIcon, X as XIcon } from "lucide-react";
 
 import {
   Form,
@@ -27,12 +28,17 @@ interface Props {
   userImage: string;
 }
 
+
 function PostThread({ userId, userImage }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { organization } = useOrganization();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [characterCount, setCharacterCount] = useState(0);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm({
     resolver: zodResolver(ThreadValidation),
@@ -47,22 +53,51 @@ function PostThread({ userId, userImage }: Props) {
     form.setValue("thread", e.target.value);
   };
 
+  const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMediaFile(file);
+    if (file.type.startsWith("image/")) {
+      setMediaType("image");
+      setMediaPreview(URL.createObjectURL(file));
+    } else if (file.type.startsWith("video/")) {
+      setMediaType("video");
+      setMediaPreview(URL.createObjectURL(file));
+    } else {
+      setMediaType(null);
+      setMediaPreview(null);
+    }
+  };
+
+  const handleRemoveMedia = () => {
+    setMediaFile(null);
+    setMediaPreview(null);
+    setMediaType(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const onSubmit = async (values: z.infer<typeof ThreadValidation>) => {
     try {
       setIsSubmitting(true);
-
+      let uploadedUrl = null;
+      if (mediaFile) {
+        // Use a simple upload endpoint or 3rd party service here
+        // For demonstration, we'll use a placeholder and skip actual upload
+        // Replace this with your actual upload logic
+        uploadedUrl = mediaPreview;
+      }
       await createThread({
         text: values.thread,
         author: userId,
         communityId: organization ? organization.id : null,
         path: pathname,
+        imageUrl: uploadedUrl,
       });
-
-      // Reset form and state
       form.reset();
       setCharacterCount(0);
-      
-      // Redirect to home
+      setMediaFile(null);
+      setMediaPreview(null);
+      setMediaType(null);
       router.push("/");
     } catch (error) {
       console.error("Error creating thread:", error);
@@ -124,8 +159,48 @@ function PostThread({ userId, userImage }: Props) {
             />
           </div>
 
-          {/* Action Buttons - removed image upload button */}
+          {/* Media Preview */}
+          {mediaPreview && (
+            <div className="mb-2 relative w-full flex flex-col items-start">
+              <button type="button" onClick={handleRemoveMedia} className="absolute top-2 right-2 bg-white/80 rounded-full p-1 z-10 border border-gray-200 hover:bg-red-100">
+                <XIcon className="w-4 h-4 text-gray-500" />
+              </button>
+              {mediaType === "image" && (
+                <img src={mediaPreview} alt="preview" className="rounded-lg max-h-64 object-contain border border-gray-200" />
+              )}
+              {mediaType === "video" && (
+                <video src={mediaPreview} controls className="rounded-lg max-h-64 object-contain border border-gray-200" />
+              )}
+            </div>
+          )}
+          {/* Action Buttons */}
           <div className="flex items-center mt-4 gap-2 border-t border-border pt-4">
+            {/* Upload Button */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,video/*"
+              className="hidden"
+              onChange={handleMediaChange}
+            />
+            <button
+              type="button"
+              className="flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition"
+              onClick={() => fileInputRef.current?.click()}
+              tabIndex={0}
+            >
+              <ImageIcon className="w-4 h-4" />
+              <span className="text-xs">Image</span>
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-1 px-3 py-2 rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition"
+              onClick={() => fileInputRef.current?.click()}
+              tabIndex={0}
+            >
+              <VideoIcon className="w-4 h-4" />
+              <span className="text-xs">Video</span>
+            </button>
             {/* Submit Button */}
             <motion.button
               type="submit"

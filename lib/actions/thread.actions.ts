@@ -172,42 +172,32 @@ export async function deleteThread(id: string, path: string): Promise<void> {
   }
 }
 
+
+// Recursively populate all children for unlimited nesting
+async function populateThreadDeep(thread: any) {
+  if (!thread) return null;
+  // Populate author and community if not populated
+  if (thread.populate) {
+    await thread.populate([
+      { path: "author", model: User, select: "_id id name image" },
+      { path: "community", model: Community, select: "_id id name image" },
+      { path: "children", model: Thread },
+    ]);
+  }
+  // Recursively populate children
+  if (Array.isArray(thread.children) && thread.children.length > 0) {
+    for (let i = 0; i < thread.children.length; i++) {
+      thread.children[i] = await populateThreadDeep(await Thread.findById(thread.children[i]._id || thread.children[i]));
+    }
+  }
+  return thread;
+}
+
 export async function fetchThreadById(threadId: string) {
   connectToDB();
-
   try {
-    const thread = await Thread.findById(threadId)
-      .populate({
-        path: "author",
-        model: User,
-        select: "_id id name image",
-      }) // Populate the author field with _id and username
-      .populate({
-        path: "community",
-        model: Community,
-        select: "_id id name image",
-      }) // Populate the community field with _id and name
-      .populate({
-        path: "children", // Populate the children field
-        populate: [
-          {
-            path: "author", // Populate the author field within children
-            model: User,
-            select: "_id id name parentId image", // Select only _id and username fields of the author
-          },
-          {
-            path: "children", // Populate the children field within children
-            model: Thread, // The model of the nested children (assuming it's the same "Thread" model)
-            populate: {
-              path: "author", // Populate the author field within nested children
-              model: User,
-              select: "_id id name parentId image", // Select only _id and username fields of the author
-            },
-          },
-        ],
-      })
-      .exec();
-
+    let thread = await Thread.findById(threadId);
+    thread = await populateThreadDeep(thread);
     return thread;
   } catch (err) {
     console.error("Error while fetching thread:", err);
