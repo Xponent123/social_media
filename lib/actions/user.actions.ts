@@ -106,7 +106,12 @@ export async function fetchUserPosts(userId: string) {
     if (userWithThreads.threads && Array.isArray(userWithThreads.threads)) {
       userWithThreads.threads = userWithThreads.threads.map((thread: any) => ({
         ...thread,
-        isLiked: loggedInUserDbId && Array.isArray(thread.likes) ? thread.likes.some((like: any) => like._id.equals(loggedInUserDbId)) : false,
+        isLiked: loggedInUserDbId && Array.isArray(thread.likes) 
+          ? thread.likes.some((like: any) => {
+              if (!like._id || !loggedInUserDbId) return false;
+              return like._id.equals(loggedInUserDbId);
+            }) 
+          : false,
       }));
     }
     

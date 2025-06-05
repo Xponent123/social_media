@@ -174,7 +174,10 @@ export async function fetchCommunityPosts(id: string) {
       communityDetails.threads = communityDetails.threads.map((thread: Thread) => ({
         ...thread,
         isLiked: loggedInUserDbId && Array.isArray(thread.likes) 
-          ? thread.likes.some((like) => like._id && loggedInUserDbId && like._id.equals(loggedInUserDbId)) 
+          ? thread.likes.some((like) => {
+              if (!like._id || !loggedInUserDbId) return false;
+              return like._id.equals(loggedInUserDbId);
+            }) 
           : false,
       }));
     }

@@ -27,7 +27,8 @@ function addIsLikedRecursively(node: any, dbCurrentUserId: mongoose.Types.Object
     ? node.likes.some((like: any) => {
         // Handle both populated likes (object with _id) and non-populated likes (ObjectId directly)
         const likeId = like._id ? like._id : like;
-        return dbCurrentUserId.equals(likeId);
+        // Add null check before calling equals
+        return dbCurrentUserId && dbCurrentUserId.equals(likeId);
       })
     : false;
 
@@ -110,7 +111,8 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
           // Handle both populated likes (object with _id) and non-populated likes (ObjectId directly)
           if (!like) return false;
           const likeId = like._id ? like._id : like;
-          return dbCurrentUserId.equals(likeId);
+          // Add null check before calling equals
+          return dbCurrentUserId && dbCurrentUserId.equals(likeId);
         })
       : false;
       
