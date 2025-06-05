@@ -69,36 +69,39 @@ export async function fetchUserPosts(userId: string) {
     connectToDB();
 
     const loggedInUser = await currentUser();
-    const loggedInUserDbId = loggedInUser ? (await User.findOne({ id: loggedInUser.id }).select("_id"))?._id : null;
+    const loggedInUserDbId = loggedInUser
+      ? (await User.findOne({ id: loggedInUser.id }).select("_id").lean() as UserDocument | null)?._id
+      : null;
 
-    // Find all threads authored by the user with the given userId
-    const userWithThreads = await User.findOne({ id: userId }).populate({
-      path: "threads",
-      model: Thread,
-      options: { sort: { createdAt: -1 } }, // Sort threads by creation date
-      populate: [
-        {
-          path: "community",
-          model: Community,
-          select: "name id image _id", // Select the "name" and "_id" fields from the "Community" model
-        },
-        {
-          path: "children",
-          model: Thread,
-          populate: {
-            path: "author",
-            model: User,
-            select: "name image id", // Select the "name" and "_id" fields from the "User" model
+    // Explicitly assert that the returned user document has a 'threads' property.
+    const userWithThreads = await User.findOne({ id: userId })
+      .populate({
+        path: "threads",
+        model: Thread,
+        options: { sort: { createdAt: -1 } },
+        populate: [
+          {
+            path: "community",
+            model: Community,
+            select: "name id image _id",
           },
-        },
-        // Populate likes to check isLiked status
-        {
-          path: "likes",
-          model: User,
-          select: "_id"
-        }
-      ],
-    }).lean(); // Use .lean() for plain JS objects to modify
+          {
+            path: "children",
+            model: Thread,
+            populate: {
+              path: "author",
+              model: User,
+              select: "name image id",
+            },
+          },
+          {
+            path: "likes",
+            model: User,
+            select: "_id",
+          },
+        ],
+      })
+      .lean() as { threads?: any[] } | null;
 
     if (!userWithThreads) return null;
 
@@ -106,15 +109,15 @@ export async function fetchUserPosts(userId: string) {
     if (userWithThreads.threads && Array.isArray(userWithThreads.threads)) {
       userWithThreads.threads = userWithThreads.threads.map((thread: any) => ({
         ...thread,
-        isLiked: loggedInUserDbId && Array.isArray(thread.likes) 
+        isLiked: loggedInUserDbId && Array.isArray(thread.likes)
           ? thread.likes.some((like: any) => {
               if (!like._id || !loggedInUserDbId) return false;
               return like._id.equals(loggedInUserDbId);
-            }) 
+            })
           : false,
       }));
     }
-    
+
     return userWithThreads;
   } catch (error) {
     console.error("Error fetching user threads:", error);
