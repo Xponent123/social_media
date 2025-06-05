@@ -7,6 +7,36 @@ import Pagination from "@/components/shared/Pagination";
 import { fetchPosts } from "@/lib/actions/thread.actions";
 import { fetchUser } from "@/lib/actions/user.actions";
 
+// Add interface for post object structure
+interface Post {
+  _id: string;
+  text: string;
+  parentId: string | null;
+  author: {
+    _id: string;
+    name: string;
+    image: string;
+  };
+  community: {
+    _id: string;
+    name: string;
+    image: string;
+  } | null;
+  createdAt: Date;
+  children: {
+    author: {
+      image: string;
+    };
+  }[];
+  isLiked: boolean;
+}
+
+// Add interface for the result from fetchPosts
+interface PostResult {
+  posts: Post[];
+  isNext: boolean;
+}
+
 async function Home({
   searchParams,
 }: {
@@ -18,10 +48,11 @@ async function Home({
   const userInfo = await fetchUser(user.id);
   if (!userInfo?.onboarded) redirect("/onboarding");
 
-  const result = await fetchPosts(
+  // Type cast the result to the interface
+  const result = (await fetchPosts(
     searchParams.page ? +searchParams.page : 1,
     30
-  );
+  )) as PostResult;
 
   return (
     <>
