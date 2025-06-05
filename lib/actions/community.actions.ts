@@ -1,6 +1,7 @@
 "use server";
 
 import { FilterQuery, SortOrder } from "mongoose";
+import mongoose from "mongoose"; // Add this import for mongoose.Types.ObjectId
 import { currentUser } from "@clerk/nextjs";
 
 import Community from "../models/community.model";
