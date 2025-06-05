@@ -5,34 +5,57 @@ import { fetchUserPosts } from "@/lib/actions/user.actions";
 
 import ThreadCard from "../cards/ThreadCard";
 
+// Define more specific interfaces to match the actual data structure
+interface Thread {
+  _id: string;
+  text: string;
+  parentId: string | null;
+  author: {
+    name: string;
+    image: string;
+    id: string;
+  };
+  community: {
+    id: string;
+    name: string;
+    image: string;
+  } | null;
+  createdAt: string;
+  children: {
+    author: {
+      image: string;
+    };
+    children?: { author: { image: string } }[];
+  }[];
+  image?: string;
+  isLiked?: boolean;
+}
+
+interface UserResult {
+  _id: string;
+  id: string;
+  name: string;
+  image: string;
+  threads: Thread[];
+}
+
+interface CommunityResult {
+  _id: string;
+  id: string;
+  name: string;
+  username: string;
+  image: string;
+  bio: string;
+  createdBy: any;
+  threads: Thread[];
+  members: any[];
+}
+
 interface Result {
   name: string;
   image: string;
   id: string;
-  threads: {
-    _id: string;
-    text: string;
-    parentId: string | null;
-    author: {
-      name: string;
-      image: string;
-      id: string;
-    };
-    community: {
-      id: string;
-      name: string;
-      image: string;
-    } | null;
-    createdAt: string;
-    children: {
-      author: {
-        image: string;
-      };
-      children?: { author: { image: string }}[] 
-    }[];
-    image?: string;
-    isLiked?: boolean;
-  }[];
+  threads: Thread[];
 }
 
 interface Props {
@@ -46,9 +69,8 @@ async function ThreadsTab({ currentUserId, accountId, accountType }: Props) {
 
   try {
     if (accountType === "Community") {
-      const communityResult = await fetchCommunityPosts(accountId);
+      const communityResult = await fetchCommunityPosts(accountId) as CommunityResult;
       
-      // If communityResult is null, provide a default Result structure
       if (!communityResult) {
         result = {
           name: "Unknown Community",
@@ -65,9 +87,8 @@ async function ThreadsTab({ currentUserId, accountId, accountType }: Props) {
         };
       }
     } else {
-      const userResult = await fetchUserPosts(accountId);
+      const userResult = await fetchUserPosts(accountId) as UserResult;
       
-      // If userResult is null, provide a default Result structure
       if (!userResult) {
         result = {
           name: "Unknown User",

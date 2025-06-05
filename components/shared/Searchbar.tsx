@@ -18,14 +18,14 @@ function Searchbar({ routeType }: Props) {
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (search) {
-        router.push(`/${routeType}?q=` + search);
+        router.push(`/${routeType}?q=` + encodeURIComponent(search));
       } else {
         router.push(`/${routeType}`);
       }
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [search, routeType]);
+  }, [search, routeType, router]);
 
   return (
     <div className='searchbar'>

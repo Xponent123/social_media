@@ -30,12 +30,12 @@ interface Props {
     author: {
       image: string;
     };
-    childCount?: number; // Add this to track replies to comments
+    childCount?: number;
   }[];
   isComment?: boolean;
-  image?: string; // Add image property
-  isLiked?: boolean; // New prop for initial like status
-  onReplyAction?: () => void; // Add this new prop for the reply button callback
+  image?: string;
+  isLiked?: boolean;
+  onReplyAction?: () => void;
 }
 
 function ThreadCard({

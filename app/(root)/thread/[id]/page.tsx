@@ -11,7 +11,7 @@ import { fetchThreadById } from "@/lib/actions/thread.actions";
 
 export const revalidate = 0;
 
-// Define interfaces for the serialized thread data
+// Improve the typing of the serialized data
 interface SerializedAuthor {
   id: string;
   name: string;
@@ -25,10 +25,15 @@ interface SerializedCommunity {
 }
 
 interface SerializedComment {
-  author: {
-    image: string;
-  };
-  childCount?: number; // Add this to track replies to comments
+  id: string;
+  parentId: string | null;
+  content: string;
+  createdAt: string;
+  author: SerializedAuthor;
+  community: SerializedCommunity | null;
+  comments: SerializedComment[];
+  image?: string;
+  isLiked?: boolean;
 }
 
 interface SerializedThread {
@@ -38,9 +43,9 @@ interface SerializedThread {
   createdAt: string;
   author: SerializedAuthor;
   community: SerializedCommunity | null;
-  comments: SerializedComment[]; // This should be SerializedThread[] if comments are also threads
+  comments: SerializedComment[]; 
   image?: string;
-  isLiked?: boolean; // Corrected from liked to isLiked to match serializeCommentTree
+  isLiked?: boolean;
 }
 
 async function page({ params }: { params: { id: string } }) {

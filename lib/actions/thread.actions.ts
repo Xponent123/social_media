@@ -374,8 +374,8 @@ export async function addCommentToThread(
   commentText: string,
   userId: string,
   path: string,
-  parentCommentId?: string // Add optional parameter for replies to comments
-) {
+  parentCommentId?: string 
+): Promise<void> {
   connectToDB();
 
   try {
@@ -391,6 +391,7 @@ export async function addCommentToThread(
       text: commentText,
       author: userId,
       parentId: parentCommentId || threadId, // Use parentCommentId if provided, otherwise use threadId
+      likes: [] // Initialize empty likes array to avoid TypeScript errors
     });
 
     // Save the comment thread to the database
