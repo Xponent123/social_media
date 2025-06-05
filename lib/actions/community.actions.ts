@@ -71,6 +71,51 @@ export async function fetchCommunityDetails(id: string) {
   }
 }
 
+// Define interfaces to help TypeScript understand the shape of community data
+interface ThreadAuthor {
+  _id: string;
+  id: string;
+  name: string;
+  image: string;
+}
+
+interface ThreadChild {
+  _id: string;
+  author: {
+    _id: string;
+    image: string;
+  };
+  children?: any[];
+}
+
+interface ThreadLike {
+  _id: mongoose.Types.ObjectId;
+}
+
+interface Thread {
+  _id: mongoose.Types.ObjectId;
+  text: string;
+  author: ThreadAuthor;
+  community: mongoose.Types.ObjectId | null;
+  createdAt: Date;
+  parentId: string | null;
+  children: ThreadChild[];
+  likes: ThreadLike[];
+  image?: string;
+}
+
+interface PopulatedCommunity {
+  _id: mongoose.Types.ObjectId;
+  id: string;
+  name: string;
+  username: string;
+  image: string;
+  bio: string;
+  createdBy: mongoose.Types.ObjectId | null;
+  threads: Thread[];
+  members: mongoose.Types.ObjectId[];
+}
+
 export async function fetchCommunityPosts(id: string) {
   console.log(`[fetchCommunityPosts] Called. Community MongoDB ID: ${id}`);
   try {
@@ -79,6 +124,7 @@ export async function fetchCommunityPosts(id: string) {
     const loggedInUser = await currentUser();
     const loggedInUserDbId = loggedInUser ? (await User.findOne({ id: loggedInUser.id }).select("_id"))?._id : null;
 
+    // Use type assertion to tell TypeScript about the expected shape
     const communityDetails = await Community.findById(id).populate({
       path: "threads",
       model: Thread,
@@ -104,7 +150,7 @@ export async function fetchCommunityPosts(id: string) {
           select: "_id"
         }
       ],
-    }).lean();
+    }).lean() as PopulatedCommunity | null;
 
     if (!communityDetails) {
       console.warn(`[fetchCommunityPosts] Community with ID ${id} not found`);
@@ -122,12 +168,12 @@ export async function fetchCommunityPosts(id: string) {
       };
     }
 
-    // Add isLiked property to each thread
+    // Now TypeScript knows communityDetails has a threads property
     if (communityDetails.threads && Array.isArray(communityDetails.threads)) {
-      communityDetails.threads = communityDetails.threads.map((thread: any) => ({
+      communityDetails.threads = communityDetails.threads.map((thread: Thread) => ({
         ...thread,
         isLiked: loggedInUserDbId && Array.isArray(thread.likes) 
-          ? thread.likes.some((like: any) => like._id && loggedInUserDbId && like._id.equals(loggedInUserDbId)) 
+          ? thread.likes.some((like) => like._id && loggedInUserDbId && like._id.equals(loggedInUserDbId)) 
           : false,
       }));
     }
