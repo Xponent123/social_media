@@ -69,29 +69,46 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
 
   const postsData = await postsQuery;
 
-  const user = await currentUser();
+  // Make currentUser check more robust with try/catch
   let dbCurrentUserId: mongoose.Types.ObjectId | null = null;
-
-  if (user && user.id) {
-    try {
-      const dbUser = await User.findOne({ id: user.id }).select("_id").lean();
-      if (dbUser) {
-        dbCurrentUserId = dbUser._id;
-      } else {
-        console.warn(`[fetchPosts] User with Clerk ID ${user.id} not found in the database.`);
+  try {
+    const user = await currentUser();
+    
+    if (user && user.id) {
+      try {
+        const dbUser = await User.findOne({ id: user.id }).select("_id").lean();
+        if (dbUser) {
+          dbCurrentUserId = dbUser._id;
+        } else {
+          console.warn(`[fetchPosts] User with Clerk ID ${user.id} not found in the database.`);
+        }
+      } catch (dbError) {
+        console.error(`[fetchPosts] Database error fetching user by Clerk ID ${user.id}:`, dbError);
       }
-    } catch (dbError) {
-      console.error(`[fetchPosts] Database error fetching user by Clerk ID ${user.id}:`, dbError);
     }
+  } catch (clerkError) {
+    // Handle Clerk errors gracefully - don't let it crash the page
+    console.error("[fetchPosts] Error with Clerk currentUser():", clerkError);
+    // Continue with dbCurrentUserId as null - posts will show as not liked by the user
   }
 
-  const postsWithLikeStatus = postsData.map(post => ({
-    ...post,
-    isLiked: dbCurrentUserId && Array.isArray(post.likes) ? post.likes.some((like: any) => {
-        const likeId = like._id ? like._id : like;
-        return dbCurrentUserId.equals(likeId);
-    }) : false,
-  }));
+  // Process posts even if there was an authentication error
+  const postsWithLikeStatus = postsData.map(post => {
+    // Safely check if post.likes exists and is an array before using .some()
+    const isLiked = dbCurrentUserId && post.likes && Array.isArray(post.likes) 
+      ? post.likes.some((like: any) => {
+          // Handle both populated likes (object with _id) and non-populated likes (ObjectId directly)
+          if (!like) return false;
+          const likeId = like._id ? like._id : like;
+          return dbCurrentUserId.equals(likeId);
+        })
+      : false;
+      
+    return {
+      ...post,
+      isLiked
+    };
+  });
 
   const isNext = totalPostsCount > skipAmount + postsData.length;
 
