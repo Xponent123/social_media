@@ -9,6 +9,15 @@ import { connectToDB } from "../mongoose";
 import { currentUser } from "@clerk/nextjs";
 
 
+// Define interfaces for MongoDB documents
+interface UserDocument {
+  _id: mongoose.Types.ObjectId;
+  id: string;
+  name: string;
+  image: string;
+  // Add other relevant fields
+}
+
 // Helper function to add isLiked to a thread and its children recursively
 function addIsLikedRecursively(node: any, dbCurrentUserId: mongoose.Types.ObjectId | null) {
   if (!node) return;
@@ -76,7 +85,8 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
     
     if (user && user.id) {
       try {
-        const dbUser = await User.findOne({ id: user.id }).select("_id").lean();
+        // Explicitly type the result as UserDocument or null
+        const dbUser = await User.findOne({ id: user.id }).select("_id").lean() as UserDocument | null;
         if (dbUser) {
           dbCurrentUserId = dbUser._id;
         } else {
@@ -271,7 +281,8 @@ export async function fetchThreadById(threadId: string) {
 
     let dbCurrentUserId: mongoose.Types.ObjectId | null = null;
     if (currentClerkUserId) {
-        const dbUser = await User.findOne({ id: currentClerkUserId }).select("_id").lean();
+        // Explicitly type the result as UserDocument or null
+        const dbUser = await User.findOne({ id: currentClerkUserId }).select("_id").lean() as UserDocument | null;
         if (dbUser) {
             dbCurrentUserId = dbUser._id;
         } else {
@@ -344,7 +355,8 @@ export async function toggleLikeThread(threadId: string, userId: string, path: s
       throw new Error("Thread not found");
     }
 
-    const userObject = await User.findOne({ id: userId }).select("_id").lean();
+    // Explicitly type the result as UserDocument or null
+    const userObject = await User.findOne({ id: userId }).select("_id").lean() as UserDocument | null;
     if (!userObject) {
       console.error(`[toggleLikeThread] User with Clerk ID ${userId} not found in DB. Cannot toggle like.`);
       throw new Error(`User with ID ${userId} not found in database.`);
