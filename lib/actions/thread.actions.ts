@@ -373,7 +373,8 @@ export async function addCommentToThread(
   threadId: string,
   commentText: string,
   userId: string,
-  path: string
+  path: string,
+  parentCommentId?: string // Add optional parameter for replies to comments
 ) {
   connectToDB();
 
@@ -389,17 +390,25 @@ export async function addCommentToThread(
     const commentThread = new Thread({
       text: commentText,
       author: userId,
-      parentId: threadId, // Set the parentId to the original thread's ID
+      parentId: parentCommentId || threadId, // Use parentCommentId if provided, otherwise use threadId
     });
 
     // Save the comment thread to the database
     const savedCommentThread = await commentThread.save();
 
-    // Add the comment thread's ID to the original thread's children array
-    originalThread.children.push(savedCommentThread._id);
-
-    // Save the updated original thread to the database
-    await originalThread.save();
+    // If this is a reply to a comment (not directly to the main thread)
+    if (parentCommentId && parentCommentId !== threadId) {
+      // Find the parent comment and add this reply to its children
+      const parentComment = await Thread.findById(parentCommentId);
+      if (parentComment) {
+        parentComment.children.push(savedCommentThread._id);
+        await parentComment.save();
+      }
+    } else {
+      // Add the comment thread's ID to the original thread's children array
+      originalThread.children.push(savedCommentThread._id);
+      await originalThread.save();
+    }
 
     revalidatePath(path);
   } catch (err) {

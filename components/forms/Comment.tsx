@@ -23,9 +23,17 @@ interface Props {
   threadId: string;
   currentUserImg: string;
   currentUserId: string;
+  parentId?: string; // Add this prop for supporting replies to comments
+  onCommentSubmitted?: () => void; // Add callback for parent component notification
 }
 
-const Comment = ({ threadId, currentUserImg, currentUserId }: Props) => {
+const Comment = ({ 
+  threadId, 
+  currentUserImg, 
+  currentUserId, 
+  parentId, // Include in destructuring
+  onCommentSubmitted // Include in destructuring
+}: Props) => {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -55,15 +63,23 @@ const Comment = ({ threadId, currentUserImg, currentUserId }: Props) => {
       parsedUserId = currentUserId;
     }
 
+    // If this is a reply to a comment, we need to adjust how we add it
+    // The threadId is still the original thread, but we need to track the parent comment
     await addCommentToThread(
       threadId,
       values.thread,
       parsedUserId,
-      pathname
+      pathname,
+      parentId // Pass the parentId to the action
     );
 
     form.reset();
-    router.refresh();
+    
+    if (onCommentSubmitted) {
+      onCommentSubmitted(); // Call the callback if provided
+    } else {
+      router.refresh(); // Default behavior if no callback
+    }
   };
 
   return (
@@ -77,7 +93,7 @@ const Comment = ({ threadId, currentUserImg, currentUserId }: Props) => {
       >
         <div className='flex flex-col gap-3'>
           <h3 className='text-base-semibold text-text-primary bg-gradient-to-r from-[rgba(var(--gradient-1-start),1)] to-[rgba(var(--gradient-1-end),1)] text-transparent bg-clip-text'>
-            Post your reply
+            {parentId ? 'Post your reply' : 'Join the conversation'}
           </h3>
           
           <div className='flex items-start gap-4'>
@@ -121,7 +137,7 @@ const Comment = ({ threadId, currentUserImg, currentUserId }: Props) => {
             >
               {form.formState.isSubmitting ? "Posting..." : (
                 <>
-                  Reply
+                  {parentId ? "Reply" : "Comment"}
                   <Send className="w-4 h-4" />
                 </>
               )}
