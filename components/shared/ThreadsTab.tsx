@@ -20,7 +20,7 @@ interface Thread {
     name: string;
     image: string;
   } | null;
-  createdAt: string;
+  createdAt: string | Date; // Accept both string and Date
   children: {
     author: {
       image: string;
@@ -40,7 +40,7 @@ interface UserResult {
 }
 
 interface CommunityResult {
-  _id: string;
+  _id: any; // Accept any type for MongoDB IDs
   id: string;
   name: string;
   username: string;
@@ -69,7 +69,8 @@ async function ThreadsTab({ currentUserId, accountId, accountType }: Props) {
 
   try {
     if (accountType === "Community") {
-      const communityResult = await fetchCommunityPosts(accountId) as CommunityResult;
+      // Use type casting with unknown as intermediate step to avoid TypeScript errors
+      const communityResult = await fetchCommunityPosts(accountId) as unknown as CommunityResult;
       
       if (!communityResult) {
         result = {
@@ -87,7 +88,8 @@ async function ThreadsTab({ currentUserId, accountId, accountType }: Props) {
         };
       }
     } else {
-      const userResult = await fetchUserPosts(accountId) as UserResult;
+      // Use type casting with unknown as intermediate step to avoid TypeScript errors
+      const userResult = await fetchUserPosts(accountId) as unknown as UserResult;
       
       if (!userResult) {
         result = {
@@ -122,6 +124,13 @@ async function ThreadsTab({ currentUserId, accountId, accountType }: Props) {
         <p className='text-center text-text-secondary py-6'>No threads found</p>
       ) : (
         result.threads.map((thread) => {
+          // Convert Date objects to ISO strings for consistent handling
+          const createdAtString = typeof thread.createdAt === 'string' 
+            ? thread.createdAt 
+            : thread.createdAt instanceof Date 
+              ? thread.createdAt.toISOString() 
+              : new Date().toISOString();
+              
           // Serialize all IDs and dates to ensure they're properly stringified
           const serializedThread = {
             id: thread._id.toString(),
@@ -145,7 +154,7 @@ async function ThreadsTab({ currentUserId, accountId, accountType }: Props) {
                     image: thread.community.image,
                   }
                 : null,
-            createdAt: new Date(thread.createdAt).toISOString(),
+            createdAt: createdAtString,
             comments: thread.children.map((child: any) => ({
               author: {
                 image: child.author.image,
