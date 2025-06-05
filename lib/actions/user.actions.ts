@@ -2,6 +2,7 @@
 
 import { FilterQuery, SortOrder } from "mongoose";
 import { revalidatePath } from "next/cache";
+import { currentUser } from "@clerk/nextjs";
 
 import Community from "../models/community.model";
 import Thread from "../models/thread.model";
@@ -63,13 +64,18 @@ export async function updateUser({
 }
 
 export async function fetchUserPosts(userId: string) {
+  console.log(`[fetchUserPosts] Called. User ID: ${userId}`);
   try {
     connectToDB();
 
+    const loggedInUser = await currentUser();
+    const loggedInUserDbId = loggedInUser ? (await User.findOne({ id: loggedInUser.id }).select("_id"))?._id : null;
+
     // Find all threads authored by the user with the given userId
-    const threads = await User.findOne({ id: userId }).populate({
+    const userWithThreads = await User.findOne({ id: userId }).populate({
       path: "threads",
       model: Thread,
+      options: { sort: { createdAt: -1 } }, // Sort threads by creation date
       populate: [
         {
           path: "community",
@@ -85,9 +91,26 @@ export async function fetchUserPosts(userId: string) {
             select: "name image id", // Select the "name" and "_id" fields from the "User" model
           },
         },
+        // Populate likes to check isLiked status
+        {
+          path: "likes",
+          model: User,
+          select: "_id"
+        }
       ],
-    });
-    return threads;
+    }).lean(); // Use .lean() for plain JS objects to modify
+
+    if (!userWithThreads) return null;
+
+    // Add isLiked property to each thread
+    if (userWithThreads.threads && Array.isArray(userWithThreads.threads)) {
+      userWithThreads.threads = userWithThreads.threads.map((thread: any) => ({
+        ...thread,
+        isLiked: loggedInUserDbId && Array.isArray(thread.likes) ? thread.likes.some((like: any) => like._id.equals(loggedInUserDbId)) : false,
+      }));
+    }
+    
+    return userWithThreads;
   } catch (error) {
     console.error("Error fetching user threads:", error);
     throw error;

@@ -38,7 +38,9 @@ interface SerializedThread {
   createdAt: string;
   author: SerializedAuthor;
   community: SerializedCommunity | null;
-  comments: SerializedComment[];
+  comments: SerializedComment[]; // This should be SerializedThread[] if comments are also threads
+  image?: string;
+  isLiked?: boolean; // Corrected from liked to isLiked to match serializeCommentTree
 }
 
 async function page({ params }: { params: { id: string } }) {
@@ -74,6 +76,7 @@ async function page({ params }: { params: { id: string } }) {
             childCount: c.comments?.length || 0
           })) || []}
           image={serializedMainThread.image}
+          isLiked={serializedMainThread.isLiked} // Corrected: was serializedMainThread.liked
         />
       </div>
 
@@ -86,10 +89,10 @@ async function page({ params }: { params: { id: string } }) {
       </div>
 
       <div className='mt-10'>
-        {serializedMainThread.comments?.map((reply: any) => (
+        {serializedMainThread.comments?.map((reply: any) => ( // reply is a SerializedThread object
           <CommentThread
             key={reply.id}
-            comment={reply}
+            comment={reply} // reply object from serializeCommentTree now contains 'isLiked'
             currentUserId={user.id}
           />
         ))}

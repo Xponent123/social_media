@@ -1,6 +1,7 @@
 "use server";
 
 import { FilterQuery, SortOrder } from "mongoose";
+import { currentUser } from "@clerk/nextjs";
 
 import Community from "../models/community.model";
 import Thread from "../models/thread.model";
@@ -51,7 +52,7 @@ export async function createCommunity(
 
 export async function fetchCommunityDetails(id: string) {
   try {
-    await await connectToDB();
+    connectToDB(); // Removed await
 
     const communityDetails = await Community.findOne({ id }).populate([
       "createdBy",
@@ -70,18 +71,23 @@ export async function fetchCommunityDetails(id: string) {
   }
 }
 
-export async function fetchCommunityPosts(id: string) {
+export async function fetchCommunityPosts(id: string) { // id here is community MongoDB _id
+  console.log(`[fetchCommunityPosts] Called. Community MongoDB ID: ${id}`);
   try {
-    await connectToDB();
+    connectToDB(); // Removed await
 
-    const communityPosts = await Community.findById(id).populate({
+    const loggedInUser = await currentUser();
+    const loggedInUserDbId = loggedInUser ? (await User.findOne({ id: loggedInUser.id }).select("_id"))?._id : null;
+
+    const communityDetails = await Community.findById(id).populate({
       path: "threads",
       model: Thread,
+      options: { sort: { createdAt: -1 } }, // Sort threads by creation date
       populate: [
         {
           path: "author",
           model: User,
-          select: "name image id", // Select the "name" and "_id" fields from the "User" model
+          select: "name image id", 
         },
         {
           path: "children",
@@ -89,13 +95,43 @@ export async function fetchCommunityPosts(id: string) {
           populate: {
             path: "author",
             model: User,
-            select: "image _id", // Select the "name" and "_id" fields from the "User" model
+            select: "image _id", 
           },
         },
+        // Populate likes to check isLiked status
+        {
+          path: "likes",
+          model: User,
+          select: "_id"
+        }
       ],
-    });
+    }).lean(); // Use .lean() for plain JS objects to modify
 
-    return communityPosts;
+    if (!communityDetails) return null;
+
+    // Add isLiked property to each thread
+    if (communityDetails.threads && Array.isArray(communityDetails.threads)) {
+      communityDetails.threads = communityDetails.threads.map((thread: any) => ({
+        ...thread,
+        isLiked: loggedInUserDbId && Array.isArray(thread.likes) ? thread.likes.some((like: any) => like._id.equals(loggedInUserDbId)) : false,
+      }));
+    }
+
+    // To match the expected structure in ThreadsTab, we need to return an object similar to what fetchUserPosts returns
+    // or adjust ThreadsTab to handle this structure. For consistency, let's make it similar.
+    // The ThreadsTab expects result.name, result.image, result.id for the community itself.
+    return {
+        _id: communityDetails._id,
+        id: communityDetails.id,
+        name: communityDetails.name,
+        username: communityDetails.username,
+        image: communityDetails.image,
+        bio: communityDetails.bio,
+        createdBy: communityDetails.createdBy,
+        threads: communityDetails.threads,
+        members: communityDetails.members,
+    };
+
   } catch (error) {
     // Handle any errors
     console.error("Error fetching community posts:", error);
@@ -115,7 +151,7 @@ export async function fetchCommunities({
   sortBy?: SortOrder;
 }) {
   try {
-    await connectToDB();
+    connectToDB(); // Removed await
 
     // Calculate the number of communities to skip based on the page number and page size.
     const skipAmount = (pageNumber - 1) * pageSize;
@@ -164,7 +200,7 @@ export async function addMemberToCommunity(
   memberId: string
 ) {
   try {
-    await connectToDB();
+    connectToDB(); // Removed await
 
     // Find the community by its unique id
     const community = await Community.findOne({ id: communityId });
@@ -206,7 +242,7 @@ export async function removeUserFromCommunity(
   communityId: string
 ) {
   try {
-    await connectToDB();
+    connectToDB(); // Removed await
 
     const userIdObject = await User.findOne({ id: userId }, { _id: 1 });
     const communityIdObject = await Community.findOne(
@@ -249,7 +285,7 @@ export async function updateCommunityInfo(
   image: string
 ) {
   try {
-    await connectToDB();
+    connectToDB(); // Removed await
 
     // Find the community by its _id and update the information
     const updatedCommunity = await Community.findOneAndUpdate(
@@ -271,7 +307,7 @@ export async function updateCommunityInfo(
 
 export async function deleteCommunity(communityId: string) {
   try {
-    await connectToDB();
+    connectToDB(); // Removed await
 
     // Find the community by its ID and delete it
     const deletedCommunity = await Community.findOneAndDelete({

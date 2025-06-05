@@ -28,7 +28,11 @@ interface Result {
       author: {
         image: string;
       };
+      // Ensure child comments also can have childCount if needed for deeper nesting display
+      children?: { author: { image: string }}[] 
     }[];
+    image?: string; // Add image property if not already present from backend
+    isLiked?: boolean; // Add isLiked property
   }[];
 }
 
@@ -95,6 +99,8 @@ async function ThreadsTab({ currentUserId, accountId, accountType }: Props) {
             // Include the count of child replies to this comment
             childCount: child.children?.length || 0
           })),
+          image: thread.image, // Pass image if available
+          isLiked: thread.isLiked, // Pass isLiked status
         };
 
         return (

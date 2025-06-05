@@ -59,6 +59,7 @@ async function Home({
                     image: child.author.image,
                   },
                 }))}
+                isLiked={post.isLiked} // Added isLiked prop
               />
             ))}
           </>

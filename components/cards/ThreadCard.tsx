@@ -1,12 +1,14 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, MessageCircle } from "lucide-react";
 
 import { formatDateString } from "@/lib/utils";
 import DeleteThread from "../forms/DeleteThread";
+import { toggleLikeThread } from "@/lib/actions/thread.actions";
+import { usePathname } from "next/navigation";
 
 interface Props {
   id: string;
@@ -32,6 +34,9 @@ interface Props {
   }[];
   isComment?: boolean;
   image?: string; // Add image property
+  isLiked?: boolean; // New prop for initial like status
+  // Add likesCount if you want to display it
+  // likesCount?: number; 
 }
 
 function ThreadCard({
@@ -44,17 +49,31 @@ function ThreadCard({
   createdAt,
   comments,
   isComment,
-  image, // Add image parameter
+  image,
+  isLiked: initialIsLiked, // Use the new prop
+  // likesCount: initialLikesCount 
 }: Props) {
-  const [liked, setLiked] = useState(false);
-  const toggleLike = () => {
-    setLiked((prev) => !prev);
-    // Add subtle animation to the heart
-    const heart = document.getElementById(`heart-${id}`);
-    if (heart) {
-      heart.classList.add("animate-ping");
-      setTimeout(() => heart.classList.remove("animate-ping"), 300);
-    }
+  const [liked, setLiked] = useState(initialIsLiked || false);
+  // const [currentLikesCount, setCurrentLikesCount] = useState(initialLikesCount || 0);
+  const [isPending, startTransition] = useTransition();
+  const pathname = usePathname();
+
+  const handleLikeClick = async () => {
+    // Optimistic update
+    setLiked(!liked);
+    // setCurrentLikesCount(liked ? currentLikesCount - 1 : currentLikesCount + 1);
+
+    startTransition(async () => {
+      try {
+        await toggleLikeThread(id, currentUserId, pathname);
+        // Optionally re-fetch or rely on revalidatePath for count updates
+      } catch (error) {
+        console.error("Failed to toggle like:", error);
+        // Revert optimistic update on error
+        setLiked(liked); 
+        // setCurrentLikesCount(liked ? currentLikesCount + 1 : currentLikesCount - 1);
+      }
+    });
   };
 
   return (
@@ -133,7 +152,7 @@ function ThreadCard({
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              onClick={toggleLike}
+              onClick={handleLikeClick}
               aria-label='like thread'
               className='btn-icon text-text-secondary p-1 md:p-2 group'
             >

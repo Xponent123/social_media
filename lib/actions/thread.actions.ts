@@ -2,20 +2,40 @@
 
 import { revalidatePath } from "next/cache";
 import mongoose from "mongoose";
-
-import { connectToDB } from "../mongoose";
-
-import User from "../models/user.model";
 import Thread from "../models/thread.model";
+import User from "../models/user.model";
 import Community from "../models/community.model";
+import { connectToDB } from "../mongoose";
+import { currentUser } from "@clerk/nextjs";
+
+
+// Helper function to add isLiked to a thread and its children recursively
+function addIsLikedRecursively(node: any, dbCurrentUserId: mongoose.Types.ObjectId | null) {
+  if (!node) return;
+
+  // Add isLiked to the current node
+  node.isLiked = dbCurrentUserId && Array.isArray(node.likes)
+    ? node.likes.some((like: any) => {
+        // Handle both populated likes (object with _id) and non-populated likes (ObjectId directly)
+        const likeId = like._id ? like._id : like;
+        return dbCurrentUserId.equals(likeId);
+      })
+    : false;
+
+  // Recursively call for children
+  if (Array.isArray(node.children) && node.children.length > 0) {
+    for (const child of node.children) {
+      addIsLikedRecursively(child, dbCurrentUserId); // Pass dbCurrentUserId here
+    }
+  }
+}
 
 export async function fetchPosts(pageNumber = 1, pageSize = 20) {
+  console.log(`[fetchPosts] Called. Page: ${pageNumber}, Size: ${pageSize}`);
   connectToDB();
 
-  // Calculate the number of posts to skip based on the page number and page size.
   const skipAmount = (pageNumber - 1) * pageSize;
 
-  // Create a query to fetch the posts that have no parent (top-level threads) (a thread that is not a comment/reply).
   const postsQuery = Thread.find({ parentId: { $in: [null, undefined] } })
     .sort({ createdAt: "desc" })
     .skip(skipAmount)
@@ -29,24 +49,53 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
       model: Community,
     })
     .populate({
-      path: "children", // Populate the children field
+      path: "children",
       populate: {
-        path: "author", // Populate the author field within children
+        path: "author",
         model: User,
-        select: "_id name parentId image", // Select only _id and username fields of the author
+        select: "_id name parentId image",
       },
-    });
+    })
+    .populate({ // Populate likes for top-level posts
+        path: "likes",
+        model: User,
+        select: "_id"
+    })
+    .lean(); // Use .lean() for plain JS objects
 
-  // Count the total number of top-level posts (threads) i.e., threads that are not comments.
   const totalPostsCount = await Thread.countDocuments({
     parentId: { $in: [null, undefined] },
-  }); // Get the total count of posts
+  });
 
-  const posts = await postsQuery.exec();
+  const postsData = await postsQuery;
 
-  const isNext = totalPostsCount > skipAmount + posts.length;
+  const user = await currentUser();
+  let dbCurrentUserId: mongoose.Types.ObjectId | null = null;
 
-  return { posts, isNext };
+  if (user && user.id) {
+    try {
+      const dbUser = await User.findOne({ id: user.id }).select("_id").lean();
+      if (dbUser) {
+        dbCurrentUserId = dbUser._id;
+      } else {
+        console.warn(`[fetchPosts] User with Clerk ID ${user.id} not found in the database.`);
+      }
+    } catch (dbError) {
+      console.error(`[fetchPosts] Database error fetching user by Clerk ID ${user.id}:`, dbError);
+    }
+  }
+
+  const postsWithLikeStatus = postsData.map(post => ({
+    ...post,
+    isLiked: dbCurrentUserId && Array.isArray(post.likes) ? post.likes.some((like: any) => {
+        const likeId = like._id ? like._id : like;
+        return dbCurrentUserId.equals(likeId);
+    }) : false,
+  }));
+
+  const isNext = totalPostsCount > skipAmount + postsData.length;
+
+  return { posts: postsWithLikeStatus, isNext };
 }
 
 interface Params {
@@ -172,7 +221,6 @@ export async function deleteThread(id: string, path: string): Promise<void> {
   }
 }
 
-
 // Recursively populate all children for unlimited nesting
 async function populateThreadDeep(thread: any) {
   if (!thread) return null;
@@ -194,14 +242,113 @@ async function populateThreadDeep(thread: any) {
 }
 
 export async function fetchThreadById(threadId: string) {
+  console.log(`[fetchThreadById] Called. Thread ID: ${threadId}`);
   connectToDB();
+
   try {
-    let thread = await Thread.findById(threadId);
-    thread = await populateThreadDeep(thread);
-    return thread;
+    const user = await currentUser();
+    let currentClerkUserId = null;
+    if (user && user.id) {
+        currentClerkUserId = user.id;
+    }
+
+    let dbCurrentUserId: mongoose.Types.ObjectId | null = null;
+    if (currentClerkUserId) {
+        const dbUser = await User.findOne({ id: currentClerkUserId }).select("_id").lean();
+        if (dbUser) {
+            dbCurrentUserId = dbUser._id;
+        } else {
+            console.warn(`[fetchThreadById] User with Clerk ID ${currentClerkUserId} not found in the database.`);
+        }
+    }
+
+    const thread = await Thread.findById(threadId)
+      .populate({
+        path: "author",
+        model: User,
+        select: "_id id name image",
+      })
+      .populate({
+        path: "community",
+        model: Community,
+        select: "_id id name image",
+      })
+      .populate({ // Populate likes for the main thread
+        path: "likes", 
+        model: User, 
+        select: "_id" 
+      })
+      .populate({
+        path: "children", // Comments
+        model: Thread, 
+        populate: [
+          { path: "author", model: User, select: "_id id name image" },
+          { path: "likes", model: User, select: "_id" }, 
+          {
+            path: "children", // Replies to comments
+            model: Thread, 
+            populate: [
+              { path: "author", model: User, select: "_id id name image" },
+              { path: "likes", model: User, select: "_id" }, 
+                 {
+                    path: "children", // great-grandchildren
+                    model: Thread,
+                    populate: [
+                        { path: "author", model: User, select: "_id id name image" },
+                        { path: "likes", model: User, select: "_id" },
+                        // Add more levels if needed, or consider a more dynamic deep population strategy
+                    ]
+                 }
+            ],
+          },
+        ],
+      })
+      .lean(); 
+
+    if (!thread) return null;
+
+    // Add isLiked to the main thread and all its children/descendants
+    addIsLikedRecursively(thread, dbCurrentUserId);
+    
+    return thread; // The thread object now contains isLiked for itself and descendants
+
   } catch (err) {
     console.error("Error while fetching thread:", err);
     throw new Error("Unable to fetch thread");
+  }
+}
+
+export async function toggleLikeThread(threadId: string, userId: string, path: string): Promise<void> {
+  connectToDB();
+
+  try {
+    const thread = await Thread.findById(threadId);
+    if (!thread) {
+      throw new Error("Thread not found");
+    }
+
+    const userObject = await User.findOne({ id: userId }).select("_id").lean();
+    if (!userObject) {
+      console.error(`[toggleLikeThread] User with Clerk ID ${userId} not found in DB. Cannot toggle like.`);
+      throw new Error(`User with ID ${userId} not found in database.`);
+    }
+    const userObjectId = userObject._id;
+
+    const userLikeIndex = thread.likes.findIndex((like: any) => like.equals(userObjectId));
+
+    if (userLikeIndex > -1) {
+      // User has already liked, so unlike
+      thread.likes.splice(userLikeIndex, 1);
+    } else {
+      // User has not liked, so like
+      thread.likes.push(userObjectId);
+    }
+
+    await thread.save();
+    revalidatePath(path);
+  } catch (error: any) {
+    console.error("Error toggling like on thread: ", error);
+    throw new Error(`Failed to toggle like on thread: ${error.message}`);
   }
 }
 

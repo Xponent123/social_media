@@ -21,6 +21,7 @@ export function serializeCommentTree(thread: any) {
         }
       : null,
     image: thread.image,
+    isLiked: thread.isLiked, // Add this line to pass through the isLiked status
     comments: Array.isArray(thread.children)
       ? thread.children.map(serializeCommentTree).filter(Boolean)
       : [],

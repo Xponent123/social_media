@@ -21,16 +21,19 @@ const threadSchema = new mongoose.Schema({
   parentId: {
     type: String,
   },
-  image: {
-    type: String,
-    default: null,
-  },
   children: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Thread",
     },
   ],
+  image: {
+    type: String, // Assuming you store image URL
+  },
+  likes: [{ // New field to store user IDs who liked the thread
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  }],
 });
 
 const Thread = mongoose.models.Thread || mongoose.model("Thread", threadSchema);

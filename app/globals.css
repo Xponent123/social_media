@@ -4,51 +4,51 @@
 
 @layer base {
   :root {
-    /* Light theme variables - with enhanced color palette */
+    /* Light theme variables - white and navy blue */
     --color-bg-primary: 255, 255, 255; /* White */
-    --color-bg-secondary: 248, 250, 252; /* Light Gray */
-    --color-bg-tertiary: 240, 245, 250; /* Lighter Gray with blue hint */
+    --color-bg-secondary: 245, 247, 250; /* Very light gray with blue hint */
+    --color-bg-tertiary: 240, 245, 250; /* Lighter gray with blue hint */
     
-    --color-text-primary: 15, 23, 42; /* Dark Blue */
-    --color-text-secondary: 71, 85, 105; /* Slate */
-    --color-text-muted: 148, 163, 184; /* Light Slate */
+    --color-text-primary: 25, 55, 109; /* Dark navy blue */
+    --color-text-secondary: 55, 80, 125; /* Navy blue */
+    --color-text-muted: 100, 125, 160; /* Lighter navy blue */
     
-    --color-accent-primary: 79, 70, 229; /* Indigo */
-    --color-accent-secondary: 139, 92, 246; /* Purple */
-    --color-accent-muted: 199, 210, 254; /* Light Purple */
+    --color-accent-primary: 28, 63, 170; /* Navy blue */
+    --color-accent-secondary: 45, 85, 205; /* Brighter navy blue */
+    --color-accent-muted: 220, 230, 250; /* Very light navy blue */
     
-    --color-border: 226, 232, 240; /* Very Light Gray */
-    --color-shadow: 0, 0, 0; /* Black for shadow */
+    --color-border: 226, 232, 240; /* Light gray with blue hint */
+    --color-shadow: 20, 40, 80; /* Navy blue for shadow */
     
     /* Gradient colors */
-    --gradient-1-start: 79, 70, 229; /* Indigo */
-    --gradient-1-end: 139, 92, 246; /* Purple */
-    --gradient-2-start: 59, 130, 246; /* Blue */
-    --gradient-2-end: 147, 51, 234; /* Purple */
+    --gradient-1-start: 28, 63, 170; /* Navy blue */
+    --gradient-1-end: 65, 105, 225; /* Royal blue */
+    --gradient-2-start: 30, 80, 190; /* Blue */
+    --gradient-2-end: 0, 48, 143; /* Darker blue */
   }
 
   .dark {
-    /* Dark theme variables - with enhanced color palette */
-    --color-bg-primary: 10, 15, 30; /* Darker blue-black */
-    --color-bg-secondary: 17, 24, 39; /* Darker background */
-    --color-bg-tertiary: 31, 41, 55; /* Darker slate */
+    /* Dark theme variables - black with light blue/cyan */
+    --color-bg-primary: 10, 10, 15; /* Nearly black */
+    --color-bg-secondary: 18, 18, 25; /* Very dark gray */
+    --color-bg-tertiary: 25, 30, 40; /* Dark gray with blue hint */
     
-    --color-text-primary: 248, 250, 252; /* Off White */
-    --color-text-secondary: 203, 213, 225; /* Light Gray */
-    --color-text-muted: 148, 163, 184; /* Slate */
+    --color-text-primary: 225, 240, 255; /* Light blue-white */
+    --color-text-secondary: 180, 210, 240; /* Light blue */
+    --color-text-muted: 130, 165, 200; /* Muted light blue */
     
-    --color-accent-primary: 139, 92, 246; /* Purple */
-    --color-accent-secondary: 167, 139, 250; /* Brighter purple for better contrast */
-    --color-accent-muted: 91, 33, 182; /* Deeper purple */
+    --color-accent-primary: 64, 145, 255; /* Light blue (replacing cyan) */
+    --color-accent-secondary: 100, 170, 255; /* Brighter light blue */
+    --color-accent-muted: 30, 70, 130; /* Darker blue */
     
-    --color-border: 45, 55, 72; /* Darker border */
+    --color-border: 40, 50, 65; /* Dark border with blue hint */
     --color-shadow: 0, 0, 0; /* Black for shadow */
     
-    /* Gradient colors */
-    --gradient-1-start: 139, 92, 246; /* Purple */
-    --gradient-1-end: 91, 33, 182; /* Deep purple */
-    --gradient-2-start: 16, 185, 129; /* Teal */
-    --gradient-2-end: 59, 130, 246; /* Blue */
+    /* Gradient colors - light blue gradients (replacing cyan) */
+    --gradient-1-start: 64, 145, 255; /* Light blue */
+    --gradient-1-end: 90, 165, 255; /* Slightly lighter blue */
+    --gradient-2-start: 50, 120, 240; /* Medium blue */
+    --gradient-2-end: 20, 80, 200; /* Deeper blue */
   }
   
   html {
@@ -115,6 +115,47 @@
   
   .thread-card:hover::after {
     opacity: 1;
+  }
+  
+  /* Enhanced light blue gradient effect for dark mode */
+  .dark .thread-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      rgba(var(--gradient-1-start), 0.8),
+      rgba(var(--gradient-1-end), 0.8),
+      rgba(var(--gradient-1-start), 0.8)
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .dark .thread-card:hover::after {
+    opacity: 1;
+  }
+
+  /* Button with gradient effect in dark mode */
+  .dark .btn-primary {
+    background: linear-gradient(
+      45deg,
+      rgba(var(--gradient-1-start), 1),
+      rgba(var(--gradient-1-end), 1)
+    );
+    box-shadow: 0 2px 10px rgba(var(--gradient-1-start), 0.3);
+  }
+  
+  .dark .btn-primary:hover {
+    background: linear-gradient(
+      45deg,
+      rgba(var(--gradient-1-end), 1),
+      rgba(var(--gradient-1-start), 1)
+    );
+    box-shadow: 0 4px 15px rgba(var(--gradient-1-start), 0.4);
   }
 
   /* Enhanced Topbar */
