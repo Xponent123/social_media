@@ -35,8 +35,7 @@ interface Props {
   isComment?: boolean;
   image?: string; // Add image property
   isLiked?: boolean; // New prop for initial like status
-  // Add likesCount if you want to display it
-  // likesCount?: number; 
+  onReplyAction?: () => void; // Add this new prop for the reply button callback
 }
 
 function ThreadCard({
@@ -51,7 +50,7 @@ function ThreadCard({
   isComment,
   image,
   isLiked: initialIsLiked, // Use the new prop
-  // likesCount: initialLikesCount 
+  onReplyAction, // Add this to the function parameter destructuring
 }: Props) {
   const [liked, setLiked] = useState(initialIsLiked || false);
   // const [currentLikesCount, setCurrentLikesCount] = useState(initialLikesCount || 0);
@@ -189,15 +188,26 @@ function ThreadCard({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
-              <Link
-                href={`/thread/${id}`}
-                className='btn-icon text-text-secondary p-1 md:p-2 hover:text-accent-primary transition-colors'
-              >
-                <MessageCircle className="w-5 h-5" />
-              </Link>
+              {onReplyAction ? (
+                // If onReplyAction is provided, use it instead of navigating
+                <button
+                  onClick={onReplyAction}
+                  className='btn-icon text-text-secondary p-1 md:p-2 hover:text-accent-primary transition-colors'
+                >
+                  <MessageCircle className="w-5 h-5" />
+                </button>
+              ) : (
+                // Otherwise, use the Link for navigation
+                <Link
+                  href={`/thread/${id}`}
+                  className='btn-icon text-text-secondary p-1 md:p-2 hover:text-accent-primary transition-colors'
+                >
+                  <MessageCircle className="w-5 h-5" />
+                </Link>
+              )}
             </motion.div>
           </div>
-
+          
           {/* Comment Preview with enhanced styling */}
           {(!isComment && comments.length > 0) || 
            (isComment && comments.some(c => c.childCount && c.childCount > 0)) ? (
