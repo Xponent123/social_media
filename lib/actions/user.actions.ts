@@ -1,6 +1,7 @@
 "use server";
 
 import { FilterQuery, SortOrder } from "mongoose";
+import mongoose from "mongoose"; // <-- ADDED: Import mongoose for Types.ObjectId
 import { revalidatePath } from "next/cache";
 import { currentUser } from "@clerk/nextjs";
 
@@ -9,6 +10,15 @@ import Thread from "../models/thread.model";
 import User from "../models/user.model";
 
 import { connectToDB } from "../mongoose";
+
+// ---- Add missing interface ----
+interface UserDocument {
+  _id: mongoose.Types.ObjectId;
+  id: string;
+  name: string;
+  image: string;
+  // ...other fields if needed...
+}
 
 export async function fetchUser(userId: string) {
   try {
