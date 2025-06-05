@@ -28,11 +28,10 @@ interface Result {
       author: {
         image: string;
       };
-      // Ensure child comments also can have childCount if needed for deeper nesting display
       children?: { author: { image: string }}[] 
     }[];
-    image?: string; // Add image property if not already present from backend
-    isLiked?: boolean; // Add isLiked property
+    image?: string;
+    isLiked?: boolean;
   }[];
 }
 
@@ -45,73 +44,107 @@ interface Props {
 async function ThreadsTab({ currentUserId, accountId, accountType }: Props) {
   let result: Result;
 
-  if (accountType === "Community") {
-    result = await fetchCommunityPosts(accountId);
-  } else {
-    result = await fetchUserPosts(accountId);
-  }
-
-  if (!result) {
-    redirect("/");
-  }
-
-  // Function to safely convert MongoDB ObjectIDs to strings
-  const serialize = (data: any) => {
-    try {
-      return JSON.parse(JSON.stringify(data));
-    } catch (error) {
-      console.error("Serialization error:", error);
-      return String(data);
+  try {
+    if (accountType === "Community") {
+      const communityResult = await fetchCommunityPosts(accountId);
+      
+      // If communityResult is null, provide a default Result structure
+      if (!communityResult) {
+        result = {
+          name: "Unknown Community",
+          image: "/assets/community.svg",
+          id: accountId,
+          threads: []
+        };
+      } else {
+        result = {
+          name: communityResult.name,
+          image: communityResult.image,
+          id: communityResult.id,
+          threads: communityResult.threads || []
+        };
+      }
+    } else {
+      const userResult = await fetchUserPosts(accountId);
+      
+      // If userResult is null, provide a default Result structure
+      if (!userResult) {
+        result = {
+          name: "Unknown User",
+          image: "/assets/profile.svg",
+          id: accountId,
+          threads: []
+        };
+      } else {
+        result = {
+          name: userResult.name,
+          image: userResult.image,
+          id: userResult.id,
+          threads: userResult.threads || []
+        };
+      }
     }
-  };
+  } catch (error) {
+    console.error(`Error fetching ${accountType} posts:`, error);
+    // Return a default structure on error
+    result = {
+      name: accountType === "Community" ? "Community" : "User",
+      image: accountType === "Community" ? "/assets/community.svg" : "/assets/profile.svg",
+      id: accountId,
+      threads: []
+    };
+  }
 
   return (
     <section className='mt-9 flex flex-col gap-10'>
-      {result.threads.map((thread) => {
-        // Serialize all IDs and dates to ensure they're properly stringified
-        const serializedThread = {
-          id: thread._id.toString(),
-          parentId: thread.parentId ? thread.parentId.toString() : null,
-          content: thread.text,
-          author:
-            accountType === "User"
-              ? { name: result.name, image: result.image, id: result.id.toString() }
-              : {
-                  name: thread.author.name,
-                  image: thread.author.image,
-                  id: thread.author.id.toString(),
-                },
-          community:
-            accountType === "Community"
-              ? { name: result.name, id: result.id.toString(), image: result.image }
-              : thread.community
-              ? {
-                  name: thread.community.name,
-                  id: thread.community.id.toString(),
-                  image: thread.community.image,
-                }
-              : null,
-          createdAt: new Date(thread.createdAt).toISOString(),
-          comments: thread.children.map((child: any) => ({
-            author: {
-              image: child.author.image,
-            },
-            // Include the count of child replies to this comment
-            childCount: child.children?.length || 0
-          })),
-          image: thread.image, // Pass image if available
-          isLiked: thread.isLiked, // Pass isLiked status
-        };
+      {result.threads.length === 0 ? (
+        <p className='text-center text-text-secondary py-6'>No threads found</p>
+      ) : (
+        result.threads.map((thread) => {
+          // Serialize all IDs and dates to ensure they're properly stringified
+          const serializedThread = {
+            id: thread._id.toString(),
+            parentId: thread.parentId ? thread.parentId.toString() : null,
+            content: thread.text,
+            author:
+              accountType === "User"
+                ? { name: result.name, image: result.image, id: result.id.toString() }
+                : {
+                    name: thread.author.name,
+                    image: thread.author.image,
+                    id: thread.author.id.toString(),
+                  },
+            community:
+              accountType === "Community"
+                ? { name: result.name, id: result.id.toString(), image: result.image }
+                : thread.community
+                ? {
+                    name: thread.community.name,
+                    id: thread.community.id.toString(),
+                    image: thread.community.image,
+                  }
+                : null,
+            createdAt: new Date(thread.createdAt).toISOString(),
+            comments: thread.children.map((child: any) => ({
+              author: {
+                image: child.author.image,
+              },
+              childCount: child.children?.length || 0
+            })),
+            image: thread.image,
+            isLiked: thread.isLiked,
+          };
 
-        return (
-          <ThreadCard
-            key={serializedThread.id}
-            {...serializedThread}
-            currentUserId={currentUserId}
-            isComment={accountType === "Community" ? false : undefined}
-          />
-        );
-      })}
+          return (
+            <ThreadCard
+              key={serializedThread.id}
+              {...serializedThread}
+              currentUserId={currentUserId}
+              isComment={accountType === "Community" ? false : undefined}
+            />
+          );
+        })
+      )}
     </section>
   );
 }

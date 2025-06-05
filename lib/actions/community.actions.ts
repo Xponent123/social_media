@@ -71,10 +71,10 @@ export async function fetchCommunityDetails(id: string) {
   }
 }
 
-export async function fetchCommunityPosts(id: string) { // id here is community MongoDB _id
+export async function fetchCommunityPosts(id: string) {
   console.log(`[fetchCommunityPosts] Called. Community MongoDB ID: ${id}`);
   try {
-    connectToDB(); // Removed await
+    connectToDB();
 
     const loggedInUser = await currentUser();
     const loggedInUserDbId = loggedInUser ? (await User.findOne({ id: loggedInUser.id }).select("_id"))?._id : null;
@@ -82,7 +82,7 @@ export async function fetchCommunityPosts(id: string) { // id here is community 
     const communityDetails = await Community.findById(id).populate({
       path: "threads",
       model: Thread,
-      options: { sort: { createdAt: -1 } }, // Sort threads by creation date
+      options: { sort: { createdAt: -1 } },
       populate: [
         {
           path: "author",
@@ -98,44 +98,66 @@ export async function fetchCommunityPosts(id: string) { // id here is community 
             select: "image _id", 
           },
         },
-        // Populate likes to check isLiked status
         {
           path: "likes",
           model: User,
           select: "_id"
         }
       ],
-    }).lean(); // Use .lean() for plain JS objects to modify
+    }).lean();
 
-    if (!communityDetails) return null;
+    if (!communityDetails) {
+      console.warn(`[fetchCommunityPosts] Community with ID ${id} not found`);
+      // Return an empty result with the expected structure
+      return {
+        _id: id,
+        id: "",
+        name: "Unknown Community",
+        username: "",
+        image: "/assets/community.svg",
+        bio: "",
+        createdBy: null,
+        threads: [],
+        members: []
+      };
+    }
 
     // Add isLiked property to each thread
     if (communityDetails.threads && Array.isArray(communityDetails.threads)) {
       communityDetails.threads = communityDetails.threads.map((thread: any) => ({
         ...thread,
-        isLiked: loggedInUserDbId && Array.isArray(thread.likes) ? thread.likes.some((like: any) => like._id.equals(loggedInUserDbId)) : false,
+        isLiked: loggedInUserDbId && Array.isArray(thread.likes) 
+          ? thread.likes.some((like: any) => like._id && loggedInUserDbId && like._id.equals(loggedInUserDbId)) 
+          : false,
       }));
     }
 
-    // To match the expected structure in ThreadsTab, we need to return an object similar to what fetchUserPosts returns
-    // or adjust ThreadsTab to handle this structure. For consistency, let's make it similar.
-    // The ThreadsTab expects result.name, result.image, result.id for the community itself.
     return {
-        _id: communityDetails._id,
-        id: communityDetails.id,
-        name: communityDetails.name,
-        username: communityDetails.username,
-        image: communityDetails.image,
-        bio: communityDetails.bio,
-        createdBy: communityDetails.createdBy,
-        threads: communityDetails.threads,
-        members: communityDetails.members,
+      _id: communityDetails._id,
+      id: communityDetails.id || id,
+      name: communityDetails.name || "Community",
+      username: communityDetails.username || "",
+      image: communityDetails.image || "/assets/community.svg",
+      bio: communityDetails.bio || "",
+      createdBy: communityDetails.createdBy || null,
+      threads: communityDetails.threads || [],
+      members: communityDetails.members || []
     };
 
   } catch (error) {
-    // Handle any errors
     console.error("Error fetching community posts:", error);
-    throw error;
+    // Return a default structure in case of error
+    return {
+      _id: id,
+      id: "",
+      name: "Error Loading Community",
+      username: "",
+      image: "/assets/community.svg",
+      bio: "",
+      createdBy: null,
+      threads: [],
+      members: []
+    };
   }
 }
 
