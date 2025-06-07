@@ -20,6 +20,22 @@ interface UserDocument {
   // ...other fields if needed...
 }
 
+// Define an interface for the structure of a lean, populated reply
+interface LeanPopulatedReply {
+  _id: mongoose.Types.ObjectId; // Mongoose _id is an ObjectId
+  text: string;
+  parentId?: string; // Based on Thread schema, parentId is a String
+  createdAt: Date;   // Mongoose Date
+  author: {          // Populated author
+    _id: mongoose.Types.ObjectId;
+    id: string;      // Clerk ID from User schema
+    name: string;
+    image: string;
+  };
+  image?: string;      // Optional image from Thread schema
+  // Include any other fields from the Thread schema that are selected or present
+}
+
 export async function fetchUser(userId: string) {
   try {
     connectToDB();
@@ -204,9 +220,10 @@ export async function getActivity(userId: string) { // userId here is the string
       return [];
     }
 
+    const userMongoIdAsObject = new mongoose.Types.ObjectId(userId);
+
     // Find the user document using the MongoDB _id (converted from string)
-    // Explicitly type the result of findOne
-    const userDoc = await User.findOne({ _id: new mongoose.Types.ObjectId(userId) })
+    const userDoc = await User.findOne({ _id: userMongoIdAsObject })
       .select("_id")
       .lean() as { _id: mongoose.Types.ObjectId } | null;
 
@@ -214,8 +231,7 @@ export async function getActivity(userId: string) { // userId here is the string
       console.warn(`[getActivity] User with DB ID ${userId} not found.`);
       return [];
     }
-    // Now userDoc is guaranteed to be an object like { _id: ObjectId(...) }
-    const userMongoId = userDoc._id; // This is now safe, userMongoId is an ObjectId
+    const userMongoId = userDoc._id;
 
     // Find all threads created by the user
     const userThreads = await Thread.find({ author: userMongoId }).select("_id children").lean();
@@ -223,51 +239,56 @@ export async function getActivity(userId: string) { // userId here is the string
     // Collect all the child thread ids (replies) from the 'children' field of each user thread
     const childThreadIds = userThreads.reduce((acc, userThreadItem) => {
       if (Array.isArray(userThreadItem.children)) {
-        // Ensure children IDs are strings
-        return acc.concat(userThreadItem.children.map(id => id.toString()));
+        return acc.concat(userThreadItem.children.map(id => {
+            // Ensure id is not null and is an ObjectId before calling toString()
+            if (id && typeof id.toString === 'function') {
+                return id.toString();
+            }
+            return null; // Or handle as an error/skip
+        }).filter(id => id !== null) as string[]); // Filter out nulls and assert as string[]
       }
       return acc;
     }, [] as string[]);
 
+    if (childThreadIds.length === 0) {
+        return []; // No replies to fetch
+    }
+
     // Find and return the child threads (replies) excluding the ones created by the same user
     const repliesFromDb = await Thread.find({
-      _id: { $in: childThreadIds.map(id => new mongoose.Types.ObjectId(id)) }, // Ensure IDs are ObjectIds for $in query
-      author: { $ne: userMongoId }, // Exclude threads authored by the same user
+      _id: { $in: childThreadIds.map(id => new mongoose.Types.ObjectId(id)) }, 
+      author: { $ne: userMongoId }, 
     }).populate({
       path: "author",
       model: User,
-      select: "name image _id id", // id is Clerk ID
-    }).lean(); // Use .lean() for plain objects
+      select: "name image _id id", 
+    }).lean() as LeanPopulatedReply[]; // Explicitly cast to our defined interface array
 
     // Serialize the replies
-    const serializedReplies = repliesFromDb.map(reply => {
-      if (!reply.author) {
-        // Handle cases where author might not be populated (shouldn't happen with populate)
-        console.warn(`[getActivity] Reply ${reply._id} missing author.`);
+    const serializedReplies = repliesFromDb.map((reply: LeanPopulatedReply) => { // Type the reply parameter
+      if (!reply.author || !reply.author._id) { // Check author and author._id
+        // It's possible _id is null if author population failed or author was deleted
+        console.warn(`[getActivity] Reply ${reply._id ? reply._id.toString() : 'ID_UNKNOWN'} missing author or author._id.`);
         return null; 
       }
       return {
         _id: reply._id.toString(),
         text: reply.text,
-        // parentId here refers to the ID of the thread/comment this reply is directly under.
-        // For an activity "X replied to your thread", this parentId is the ID of one of the user's threads.
-        parentId: reply.parentId ? reply.parentId.toString() : null,
-        createdAt: reply.createdAt.toISOString(),
+        parentId: reply.parentId ? reply.parentId.toString() : null, // parentId is already a string from schema, but ensure it's handled if optional
+        createdAt: reply.createdAt.toISOString(), // Convert Date to ISO string
         author: {
           _id: reply.author._id.toString(),
-          id: reply.author.id, // Clerk ID
+          id: reply.author.id, 
           name: reply.author.name,
           image: reply.author.image,
         },
         image: reply.image || null,
-        // Add any other fields needed by ActivityCard
       };
-    }).filter(item => item !== null); // Filter out any null items from bad data
+    }).filter(item => item !== null); 
 
-    return serializedReplies as NonNullable<typeof serializedReplies[0]>[]; // Assert non-null items
+    return serializedReplies as NonNullable<typeof serializedReplies[0]>[];
   } catch (error) {
     console.error("Error fetching replies: ", error);
-    // throw error; // Re-throwing might hide specific client-side issues, consider returning []
-    return []; // Return empty array on error to prevent page crash
+    return []; 
   }
 }
