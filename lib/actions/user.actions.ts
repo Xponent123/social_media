@@ -194,17 +194,28 @@ export async function fetchUsers({
   }
 }
 
-export async function getActivity(userId: string) {
+export async function getActivity(userId: string) { // userId here is the string representation of MongoDB _id
   try {
     connectToDB();
 
-    // Find the user's MongoDB _id based on the Clerk userId
-    const userDoc = await User.findOne({ _id: userId }).select("_id").lean();
+    // Validate if userId is a valid ObjectId string before querying
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.warn(`[getActivity] Invalid MongoDB ObjectId string provided: ${userId}`);
+      return [];
+    }
+
+    // Find the user document using the MongoDB _id (converted from string)
+    // Explicitly type the result of findOne
+    const userDoc = await User.findOne({ _id: new mongoose.Types.ObjectId(userId) })
+      .select("_id")
+      .lean() as { _id: mongoose.Types.ObjectId } | null;
+
     if (!userDoc) {
       console.warn(`[getActivity] User with DB ID ${userId} not found.`);
       return [];
     }
-    const userMongoId = userDoc._id;
+    // Now userDoc is guaranteed to be an object like { _id: ObjectId(...) }
+    const userMongoId = userDoc._id; // This is now safe, userMongoId is an ObjectId
 
     // Find all threads created by the user
     const userThreads = await Thread.find({ author: userMongoId }).select("_id children").lean();
@@ -220,7 +231,7 @@ export async function getActivity(userId: string) {
 
     // Find and return the child threads (replies) excluding the ones created by the same user
     const repliesFromDb = await Thread.find({
-      _id: { $in: childThreadIds },
+      _id: { $in: childThreadIds.map(id => new mongoose.Types.ObjectId(id)) }, // Ensure IDs are ObjectIds for $in query
       author: { $ne: userMongoId }, // Exclude threads authored by the same user
     }).populate({
       path: "author",
