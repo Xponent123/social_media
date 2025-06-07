@@ -16,6 +16,12 @@ export const metadata: Metadata = {
   title: "ConnectX",
   description: "A modern social media platform",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+  // Add icons metadata for Next.js 13+ App Router convention
+  icons: {
+    icon: '/logo.png', // Path relative to the public folder
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({
@@ -25,11 +31,15 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang='en'>
+      <html lang='en' suppressHydrationWarning={true}>
         <head>
+          {/* Standard favicon links (can be redundant if using Next.js metadata.icons but good for broader compatibility) */}
+          <link rel="icon" href="/logo.png" type="image/png" />
+          <link rel="shortcut icon" href="/logo.png" type="image/png" />
+          <link rel="apple-touch-icon" href="/logo.png" />
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
         </head>
-        <body className={inter.className}>
+        <body className={inter.className} suppressHydrationWarning={true}>
           <ThemeProvider>
             <Topbar />
 

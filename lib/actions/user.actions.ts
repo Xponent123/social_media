@@ -198,27 +198,65 @@ export async function getActivity(userId: string) {
   try {
     connectToDB();
 
+    // Find the user's MongoDB _id based on the Clerk userId
+    const userDoc = await User.findOne({ _id: userId }).select("_id").lean();
+    if (!userDoc) {
+      console.warn(`[getActivity] User with DB ID ${userId} not found.`);
+      return [];
+    }
+    const userMongoId = userDoc._id;
+
     // Find all threads created by the user
-    const userThreads = await Thread.find({ author: userId });
+    const userThreads = await Thread.find({ author: userMongoId }).select("_id children").lean();
 
     // Collect all the child thread ids (replies) from the 'children' field of each user thread
-    const childThreadIds = userThreads.reduce((acc, userThread) => {
-      return acc.concat(userThread.children);
-    }, []);
+    const childThreadIds = userThreads.reduce((acc, userThreadItem) => {
+      if (Array.isArray(userThreadItem.children)) {
+        // Ensure children IDs are strings
+        return acc.concat(userThreadItem.children.map(id => id.toString()));
+      }
+      return acc;
+    }, [] as string[]);
 
     // Find and return the child threads (replies) excluding the ones created by the same user
-    const replies = await Thread.find({
+    const repliesFromDb = await Thread.find({
       _id: { $in: childThreadIds },
-      author: { $ne: userId }, // Exclude threads authored by the same user
+      author: { $ne: userMongoId }, // Exclude threads authored by the same user
     }).populate({
       path: "author",
       model: User,
-      select: "name image _id",
-    });
+      select: "name image _id id", // id is Clerk ID
+    }).lean(); // Use .lean() for plain objects
 
-    return replies;
+    // Serialize the replies
+    const serializedReplies = repliesFromDb.map(reply => {
+      if (!reply.author) {
+        // Handle cases where author might not be populated (shouldn't happen with populate)
+        console.warn(`[getActivity] Reply ${reply._id} missing author.`);
+        return null; 
+      }
+      return {
+        _id: reply._id.toString(),
+        text: reply.text,
+        // parentId here refers to the ID of the thread/comment this reply is directly under.
+        // For an activity "X replied to your thread", this parentId is the ID of one of the user's threads.
+        parentId: reply.parentId ? reply.parentId.toString() : null,
+        createdAt: reply.createdAt.toISOString(),
+        author: {
+          _id: reply.author._id.toString(),
+          id: reply.author.id, // Clerk ID
+          name: reply.author.name,
+          image: reply.author.image,
+        },
+        image: reply.image || null,
+        // Add any other fields needed by ActivityCard
+      };
+    }).filter(item => item !== null); // Filter out any null items from bad data
+
+    return serializedReplies as NonNullable<typeof serializedReplies[0]>[]; // Assert non-null items
   } catch (error) {
     console.error("Error fetching replies: ", error);
-    throw error;
+    // throw error; // Re-throwing might hide specific client-side issues, consider returning []
+    return []; // Return empty array on error to prevent page crash
   }
 }

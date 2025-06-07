@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, usePathname } from "next/navigation";
 import * as z from "zod";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react"; // Import useEffect
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Send, Image as ImageIcon, Video as VideoIcon, X as XIcon } from "lucide-react";
@@ -40,6 +40,16 @@ function PostThread({ userId, userImage }: Props) {
   const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Effect to revoke object URL when component unmounts or mediaPreview changes
+  useEffect(() => {
+    let currentPreview = mediaPreview;
+    return () => {
+      if (currentPreview && currentPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(currentPreview);
+      }
+    };
+  }, [mediaPreview]);
+
   const form = useForm({
     resolver: zodResolver(ThreadValidation),
     defaultValues: {
@@ -56,20 +66,31 @@ function PostThread({ userId, userImage }: Props) {
   const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Revoke previous object URL if it exists
+    if (mediaPreview && mediaPreview.startsWith("blob:")) {
+      URL.revokeObjectURL(mediaPreview);
+    }
+
     setMediaFile(file);
+    const newPreviewUrl = URL.createObjectURL(file);
+    setMediaPreview(newPreviewUrl);
+
     if (file.type.startsWith("image/")) {
       setMediaType("image");
-      setMediaPreview(URL.createObjectURL(file));
     } else if (file.type.startsWith("video/")) {
       setMediaType("video");
-      setMediaPreview(URL.createObjectURL(file));
     } else {
       setMediaType(null);
-      setMediaPreview(null);
+      setMediaPreview(null); // Reset if not image/video
+      URL.revokeObjectURL(newPreviewUrl); // Revoke if not used
     }
   };
 
   const handleRemoveMedia = () => {
+    if (mediaPreview && mediaPreview.startsWith("blob:")) {
+      URL.revokeObjectURL(mediaPreview);
+    }
     setMediaFile(null);
     setMediaPreview(null);
     setMediaType(null);
@@ -84,7 +105,7 @@ function PostThread({ userId, userImage }: Props) {
         // Use a simple upload endpoint or 3rd party service here
         // For demonstration, we'll use a placeholder and skip actual upload
         // Replace this with your actual upload logic
-        uploadedUrl = mediaPreview;
+        uploadedUrl = mediaPreview; // In a real app, this would be the URL from your upload service
       }
       await createThread({
         text: values.thread,
@@ -95,9 +116,14 @@ function PostThread({ userId, userImage }: Props) {
       });
       form.reset();
       setCharacterCount(0);
+      // No need to revoke mediaPreview here as it's handled by useEffect or handleRemoveMedia
+      // if it was set by createObjectURL. If uploadedUrl is a blob URL and needs revoking,
+      // it should be handled after it's no longer needed post-submission.
+      // However, typically uploadedUrl will be a permanent URL from a storage service.
       setMediaFile(null);
-      setMediaPreview(null);
+      setMediaPreview(null); 
       setMediaType(null);
+      if (fileInputRef.current) fileInputRef.current.value = ""; // Clear file input
       router.push("/");
     } catch (error) {
       console.error("Error creating thread:", error);

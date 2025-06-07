@@ -3,8 +3,10 @@ import Link from "next/link";
 import { currentUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 
-import { fetchUser, getActivity } from "@/lib/actions/user.actions";
-import { AnimatedCard } from "@/components/shared/AnimatedWrapper";
+import { fetchUser } from "@/lib/actions/user.actions";
+import { getActivity } from "@/lib/actions/user.actions";
+import { formatDateString } from "@/lib/utils";
+
 
 async function Page() {
   const user = await currentUser();
@@ -13,7 +15,8 @@ async function Page() {
   const userInfo = await fetchUser(user.id);
   if (!userInfo?.onboarded) redirect("/onboarding");
 
-  const activity = await getActivity(userInfo._id);
+  // getActivity now expects the MongoDB _id of the user
+  const activity = await getActivity(userInfo._id.toString());
 
   return (
     <>
@@ -22,26 +25,35 @@ async function Page() {
       <section className='mt-10 flex flex-col gap-5'>
         {activity.length > 0 ? (
           <>
-            {activity.map((activity, index) => (
-              <AnimatedCard key={activity._id} delay={index * 0.05}>
-                <Link href={`/thread/${activity.parentId}`}>
-                  <article className='activity-card flex items-center gap-2 rounded-md border border-border bg-bg-primary p-4 shadow-sm transition-all duration-200 hover:shadow-md'>
-                    <Image
-                      src={activity.author.image}
-                      alt={`${activity.author.name}'s profile picture`}
-                      width={20}
-                      height={20}
-                      className='rounded-full object-cover'
-                    />
-                    <p className='text-small-regular text-text-secondary'>
-                      <span className='mr-1 font-medium text-accent-primary'>
-                        {activity.author.name}
-                      </span>{" "}
-                      replied to your thread
-                    </p>
-                  </article>
-                </Link>
-              </AnimatedCard>
+            {activity.map((activityItem) => (
+              <Link href={`/thread/${activityItem.parentId}`} key={activityItem._id}>
+                <article className='activity-card'>
+                  <div className="flex items-start gap-3">
+                    <div className="relative h-8 w-8 rounded-full overflow-hidden">
+                      <Image
+                        src={activityItem.author.image}
+                        alt={`${activityItem.author.name}'s profile picture`}
+                        fill
+                        className='object-cover'
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className='!text-small-regular text-text-secondary'>
+                        <span className='mr-1 text-accent-primary font-semibold'>
+                          {activityItem.author.name}
+                        </span>{" "}
+                        replied to your thread:
+                      </p>
+                      <p className="mt-1 text-small-regular text-text-primary truncate">
+                        "{activityItem.text}"
+                      </p>
+                      <p className='!text-tiny-medium text-text-muted mt-2'>
+                        {formatDateString(activityItem.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              </Link>
             ))}
           </>
         ) : (
